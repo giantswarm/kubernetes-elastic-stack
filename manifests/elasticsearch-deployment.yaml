@@ -16,9 +16,12 @@ spec:
           capabilities:
             add:
               - IPC_LOCK
-        image: quay.io/pires/docker-elasticsearch-kubernetes:2.3.4
+        # image: quay.io/pires/docker-elasticsearch-kubernetes:2.3.4
+        image: elasticsearch:5.0.0-alpha5
         # imagePullPolicy: Always
         env:
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms1g -Xmx1g"
         - name: NAMESPACE
           valueFrom:
             fieldRef:
