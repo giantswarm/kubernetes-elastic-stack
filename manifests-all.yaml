@@ -1,0 +1,182 @@
+# Derived from ./manifests/*.yaml
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: elasticsearch
+spec:
+  template:
+    metadata:
+      labels:
+        component: elasticsearch
+        role: master
+    spec:
+      containers:
+      - name: elasticsearch
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - IPC_LOCK
+        image: elasticsearch:5.0.0-alpha5
+        # imagePullPolicy: Always
+        env:
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms1g -Xmx1g"
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: "CLUSTER_NAME"
+          value: "myesdb"
+        - name: NODE_MASTER
+          value: "true"
+        - name: NODE_DATA
+          # value: "false"
+          value: "true"
+        - name: HTTP_ENABLE
+          # value: "false"
+          value: "true"
+        ports:
+        - containerPort: 9200
+          name: api
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+      volumes:
+          - emptyDir:
+              medium: ""
+            name: "storage"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  labels:
+    component: elasticsearch
+spec:
+  type: NodePort
+  ports:
+  - port: 9200
+    protocol: TCP
+    targetPort: api
+    nodePort: 30130
+  selector:
+    component: elasticsearch
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat
+  labels:
+    component: filebeat
+data:
+  filebeat.yml: |
+    filebeat.prospectors:
+      - input_type: log
+        paths:
+          - /var/log/*.log
+
+      - input_type: log
+        json.keys_under_root: false
+        paths:
+          - /var/lib/docker/containers/*/*-json.log
+
+    output.elasticsearch:
+      hosts: ["elasticsearch:9200"]
+
+      template.name: "filebeat"
+      template.path: "filebeat.template.json"
+      template.overwrite: false
+
+    # Sets log level. The default log level is error.
+    # Available log levels are: critical, error, warning, info, debug
+    logging.level: info
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: filebeat
+spec:
+  template:
+    metadata:
+      labels:
+        component: filebeat
+    spec:
+      containers:
+      - image: giantswarm/filebeat
+        name: filebeat
+        env:
+        resources:
+          # keep request = limit to keep this container in guaranteed class
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
+        volumeMounts:
+        - name: containers
+          mountPath: /var/lib/docker/containers
+        # - name: hostlog
+        #   mountPath: /varlog
+        - name: config-volume
+          mountPath: /etc/filebeat
+      volumes:
+      - name: containers
+        hostPath:
+          path: /var/lib/docker/containers
+      # - name: hostlog
+      #   hostPath:
+      #     path: /var/log
+      - name: config-volume
+        configMap:
+          name: filebeat
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: kibana
+    spec:
+      containers:
+      - name: kibana
+        # image: gcr.io/google_containers/kibana:1.3
+        image: kibana:5.0.0-alpha5
+        resources:
+          # keep request = limit to keep this container in guaranteed class
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
+        env:
+          - name: "ELASTICSEARCH_URL"
+            value: "http://elasticsearch:9200"
+        ports:
+        - containerPort: 5601
+          name: ui
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  labels:
+    component: kibana
+spec:
+  type: NodePort
+  ports:
+  - port: 5601
+    protocol: TCP
+    targetPort: ui
+    nodePort: 30140
+  selector:
+    component: kibana
+---
