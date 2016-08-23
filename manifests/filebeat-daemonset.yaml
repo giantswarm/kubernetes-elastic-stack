@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: filebeat
+spec:
+  template:
+    metadata:
+      labels:
+        component: filebeat
+    spec:
+      containers:
+      - image: giantswarm/filebeat
+        name: filebeat
+        env:
+        resources:
+          # keep request = limit to keep this container in guaranteed class
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
+        volumeMounts:
+        - name: containers
+          mountPath: /var/lib/docker/containers
+        # - name: hostlog
+        #   mountPath: /varlog
+        - name: config-volume
+          mountPath: /etc/filebeat
+      volumes:
+      - name: containers
+        hostPath:
+          path: /var/lib/docker/containers
+      # - name: hostlog
+      #   hostPath:
+      #     path: /var/log
+      - name: config-volume
+        configMap:
+          name: filebeat
