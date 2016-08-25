@@ -20,7 +20,9 @@ minikube ssh
 sudo sysctl -w vm.max_map_count=262144
 cat /proc/sys/vm/max_map_count
 
-sudo echo "EXTRA_ARGS='--label provider=kvm --log-opt labels=io.kubernetes.container.hash,io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid'" >> /var/lib/boot2docker/profile
+sudo sh -c "echo \"EXTRA_ARGS='--label provider=kvm --log-opt labels=io.kubernetes.container.hash,
+io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid'\" >> /var/lib/boo
+t2docker/profile"
 
 sudo /etc/init.d/docker restart
 ```
