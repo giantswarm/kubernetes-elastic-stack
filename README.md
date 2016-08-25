@@ -32,7 +32,7 @@ sudo /etc/init.d/docker restart
 ```bash
 kubectl create namespace logging
 kubectl --namespace logging create \
-  --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/first-draft/manifests-all.yaml
+  --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
 minikube service --namespace logging kibana
   # for index pattern choose `filebeat-*` and `@timestamp` for Time-field name
 ```
