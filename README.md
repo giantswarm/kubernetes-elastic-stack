@@ -1,5 +1,9 @@
 # Logging with Elastic in Kubernetes
 
+See [docs](docs/index.md) for full recipe content.
+
+# Local Setup
+
 ## Start a local Kubernetes using minikube
 
 > If some webpages don't show up immediately wait a bit and reload. Also the Kubernetes Dashboard needs reloading to update its view.
@@ -9,7 +13,7 @@ minikube start --memory 2048
 # --vm-driver kvm
 
 minikube dashboard
-#^ maybe wait a bit and retry
+# maybe wait a bit and retry
 kubectl get --all-namespaces services,pods
 ```
 
@@ -44,10 +48,10 @@ kubectl delete namespace logging
 ```
 
 To delete the whole local Kubernetes cluster use this:
+
 ```bash
 minikube delete
 ```
-
 
 # How to create one single manifest file
 
@@ -61,4 +65,4 @@ for file in ./manifests/*.yaml ; do
      printf -- "---\n" >> "$target"
   fi
 done
-``
+```
