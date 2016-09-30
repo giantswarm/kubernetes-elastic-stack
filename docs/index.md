@@ -18,7 +18,7 @@ minikube start --memory 2048
 # --vm-driver kvm
 
 minikube dashboard
-#^ maybe wait a bit and retry
+# maybe wait a bit and retry
 kubectl get --all-namespaces services,pods
 ```
 
@@ -53,6 +53,7 @@ kubectl delete namespace logging
 ```
 
 To delete the whole local Kubernetes cluster use this:
+
 ```bash
 minikube delete
 ```
@@ -70,4 +71,4 @@ for file in ./manifests/*.yaml ; do
      printf -- "---\n" >> "$target"
   fi
 done
-``
+```
