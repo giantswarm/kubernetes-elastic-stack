@@ -11,7 +11,7 @@ categories = ["recipes"]
 
 The Elastic stack, most prominently know as the ELK stack, in this recipe is the combination of Filebeat, Elasticsearch, and Kibana. This stack helps you get all logs from your containers into a single searchable data store without having to worry about logs disappearing together with the containers. With Kibana you get a nice analytics and visualization platform on top.
 
-![kibana.png]
+![Kibana](kibana.png)
 
 ## Deploying Elasticsearch, Filebeat, and Kibana
 
