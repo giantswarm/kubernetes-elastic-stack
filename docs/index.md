@@ -1,74 +1,32 @@
 +++
-title = "Logging with Elastic"
-description = "Elastic, also known as the ELK stack, has become a wide-spread tool for aggregating logs. This recipe helps you to set it up in Kubernetes."
-date = "2016-08-25"
+title = "Logging with the Elastic Stack"
+description = "The Elastic stack, also known as the ELK stack, has become a wide-spread tool for aggregating logs. This recipe helps you to set it up in Kubernetes."
+date = "2016-09-30"
 type = "page"
 weight = 50
 categories = ["recipes"]
 +++
 
-# Logging with Elastic in Kubernetes
+# Logging with the Elastic Stack
 
-## Start a local Kubernetes using minikube
+The Elastic stack, most prominently know as the ELK stack, in this recipe is the combination of Filebeat, Elasticsearch, and Kibana. This stack helps you get all logs from your containers into a single searchable data store without having to worry about logs disappearing together with the containers. With Kibana you get a nice analytics and visualization platform on top.
 
-> If some webpages don't show up immediately wait a bit and reload. Also the Kubernetes Dashboard needs reloading to update its view.
+![kibana.png]
 
-```bash
-minikube start --memory 2048
-# --vm-driver kvm
+## Deploying Elasticsearch, Filebeat, and Kibana
 
-minikube dashboard
-# maybe wait a bit and retry
-kubectl get --all-namespaces services,pods
-```
-
-## Extra configuration for Elasticsearch and Filebeat
-
-```bash
-minikube ssh
-sudo sysctl -w vm.max_map_count=262144
-cat /proc/sys/vm/max_map_count
-
-sudo sh -c "echo \"EXTRA_ARGS='--label provider=kvm --log-opt labels=io.kubernetes.container.hash,
-io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid'\" >> /var/lib/boo
-t2docker/profile"
-
-sudo /etc/init.d/docker restart
-```
-
-## Logging with Elasticsearch and Filebeat
+First we create a namespace and deploy our manifests to it.
 
 ```bash
 kubectl create namespace logging
 kubectl --namespace logging create \
   --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
-minikube service --namespace logging kibana
-  # for index pattern choose `filebeat-*` and `@timestamp` for Time-field name
 ```
 
-## Turn down all logging components
+## Configuring Kibana
 
-```bash
-kubectl delete namespace logging
-```
+Now we need to open up Kibana and set `filebeat-*` for `index pattern`.
 
-To delete the whole local Kubernetes cluster use this:
+Then, we can choose `@timestamp` for `time-field name`below.
 
-```bash
-minikube delete
-```
-
-
-# How to create one single manifest file
-
-```bash
-target="./manifests-all.yaml"
-rm "$target"
-printf -- "# Derived from ./manifests/*.yaml\n---\n" >> "$target"
-for file in ./manifests/*.yaml ; do
-  if [ -e "$file" ] ; then
-     cat "$file" >> "$target"
-     printf -- "---\n" >> "$target"
-  fi
-done
-```
+All set! You can now use Kibana to access your logs including filtering logs based on pod names and namespaces.
