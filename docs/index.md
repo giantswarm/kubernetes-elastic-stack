@@ -1,7 +1,7 @@
 +++
 title = "Logging with the Elastic Stack"
 description = "The Elastic stack, also known as the ELK stack, has become a wide-spread tool for aggregating logs. This recipe helps you to set it up in Kubernetes."
-date = "2016-09-30"
+date = "2016-10-24"
 type = "page"
 weight = 50
 categories = ["recipes"]
@@ -27,6 +27,6 @@ kubectl --namespace logging create \
 
 Now we need to open up Kibana and set `filebeat-*` for `index pattern`.
 
-Then, we can choose `@timestamp` for `time-field name`below.
+Then, we can choose `json.time` for `time-field name` below.
 
 All set! You can now use Kibana to access your logs including filtering logs based on pod names and namespaces.
