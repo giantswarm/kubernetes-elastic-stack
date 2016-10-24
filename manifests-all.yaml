@@ -10,6 +10,17 @@ spec:
       labels:
         component: elasticsearch
         role: master
+      annotations:
+        pod.alpha.kubernetes.io/init-containers: '[
+          {
+          "name": "sysctl",
+            "image": "busybox",
+            "command": ["sysctl", "-w", "vm.max_map_count=262144"],
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]'
     spec:
       containers:
       - name: elasticsearch
