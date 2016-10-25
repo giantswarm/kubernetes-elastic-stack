@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kibana
+  namespace: logging
   labels:
     component: kibana
 spec:
@@ -10,6 +11,5 @@ spec:
   - port: 5601
     protocol: TCP
     targetPort: ui
-    nodePort: 30140
   selector:
     component: kibana
