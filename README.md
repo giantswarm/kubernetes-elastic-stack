@@ -9,7 +9,7 @@ See [docs](docs/index.md) for full recipe content.
 > If some webpages don't show up immediately wait a bit and reload. Also the Kubernetes Dashboard needs reloading to update its view.
 
 ```bash
-minikube start --memory 2048
+minikube start
 # --vm-driver kvm
 
 minikube dashboard
@@ -21,12 +21,11 @@ kubectl get --all-namespaces services,pods
 
 ```bash
 minikube ssh
-sudo sysctl -w vm.max_map_count=262144
-cat /proc/sys/vm/max_map_count
+# sudo sysctl -w vm.max_map_count=262144
+# cat /proc/sys/vm/max_map_count
 
-sudo sh -c "echo \"EXTRA_ARGS='--label provider=kvm --log-opt labels=io.kubernetes.container.hash,
-io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid'\" >> /var/lib/boo
-t2docker/profile"
+sudo sh -c "echo \"EXTRA_ARGS=' --log-opt labels=io.kubernetes.container.hash,io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid'\" >> /var/lib/boot2docker/profile"
+# --label provider=kvm
 
 sudo /etc/init.d/docker restart
 ```
@@ -34,11 +33,10 @@ sudo /etc/init.d/docker restart
 ## Logging with Elasticsearch and Filebeat
 
 ```bash
-kubectl create namespace logging
-kubectl --namespace logging create \
+kubectl apply \
   --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
 minikube service --namespace logging kibana
-  # for index pattern choose `filebeat-*` and `@timestamp` for Time-field name
+  # for index pattern choose `filebeat-*` and `@json.time` for Time-field name
 ```
 
 ## Turn down all logging components
@@ -51,18 +49,4 @@ To delete the whole local Kubernetes cluster use this:
 
 ```bash
 minikube delete
-```
-
-# How to create one single manifest file
-
-```bash
-target="./manifests-all.yaml"
-rm "$target"
-printf -- "# Derived from ./manifests/*.yaml\n---\n" >> "$target"
-for file in ./manifests/*.yaml ; do
-  if [ -e "$file" ] ; then
-     cat "$file" >> "$target"
-     printf -- "---\n" >> "$target"
-  fi
-done
 ```
