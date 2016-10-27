@@ -18,7 +18,7 @@ The Elastic stack, most prominently know as the ELK stack, in this recipe is the
 First we create a namespace and deploy our manifests to it.
 
 ```bash
-kubectl alppy \
+kubectl apply \
   --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
 ```
 
