@@ -1,7 +1,7 @@
 +++
 title = "Logging with the Elastic Stack"
 description = "The Elastic stack, also known as the ELK stack, has become a wide-spread tool for aggregating logs. This recipe helps you to set it up in Kubernetes."
-date = "2016-10-24"
+date = "2016-10-27"
 type = "page"
 weight = 50
 categories = ["recipes"]
@@ -18,8 +18,7 @@ The Elastic stack, most prominently know as the ELK stack, in this recipe is the
 First we create a namespace and deploy our manifests to it.
 
 ```bash
-kubectl create namespace logging
-kubectl --namespace logging create \
+kubectl alppy \
   --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
 ```
 
