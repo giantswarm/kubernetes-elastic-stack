@@ -35,7 +35,7 @@ spec:
           capabilities:
             add:
               - IPC_LOCK
-        image: elasticsearch:5.0.0-alpha5
+        image: elasticsearch:5
         # imagePullPolicy: Always
         env:
         - name: "ES_JAVA_OPTS"
@@ -169,7 +169,7 @@ spec:
       containers:
       - name: kibana
         # image: gcr.io/google_containers/kibana:1.3
-        image: kibana:5.0.0-alpha5
+        image: kibana:5
         resources:
           # keep request = limit to keep this container in guaranteed class
           limits:
