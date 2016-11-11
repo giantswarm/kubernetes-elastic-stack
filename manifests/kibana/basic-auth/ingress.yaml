@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kibana-basic-auth
+  namespace: logging
+  labels:
+    app: kibana
+    component: basic-auth
+spec:
+  backend:
+    serviceName: kibana-basic-auth
+    servicePort: 80
+    # servicePort: 443

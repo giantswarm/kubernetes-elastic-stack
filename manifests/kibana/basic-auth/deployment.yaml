@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kibana-basic-auth
+  namespace: logging
+  labels:
+    app: kibana
+    component: basic-auth
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kibana
+        component: basic-auth
+    spec:
+      containers:
+      - name: caddy
+        image: dockermuenster/caddy:0.9.3
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        # - containerPort: 443
+        #   name: https
+        #   protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/caddy
+      volumes:
+      - name: config
+        configMap:
+          name: kibana-basic-auth
