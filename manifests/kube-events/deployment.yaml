@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kube-events
+  namespace: logging
+  labels:
+    app: kube-events
+spec:
+  template:
+    metadata:
+      labels:
+        app: kube-events
+    spec:
+      containers:
+      - name: kube-events
+        image: giantswarm/tiny-tools
+        imagePullPolicy: Always
+        command:
+        - fish
+        - --command
+        - |
+          set kube_token (cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl --silent --fail --show-error --insecure --header "Authorization: Bearer $kube_token" \
+            --request GET https://kubernetes.default.svc/api/v1/watch/events \
+              | jq -c '.' | while read -l event
+            set -l index "kube-events-"(date --utc -I)
+            curl --request POST http://elasticsearch.logging.svc:9200/$index/event --data "$event"
+          end
