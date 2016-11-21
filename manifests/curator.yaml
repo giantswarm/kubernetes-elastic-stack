@@ -9,4 +9,11 @@ spec:
   containers:
   - name: curator
     image: bobrik/curator
-    args: ["--config", "config.yml", "action_file.yml"]
+    args: ["--config", "/etc/config/config.yml", "/etc/config/action_file.yml"]
+    volumeMounts:
+      - name: config-volume
+        mountPath: /etc/config
+  volumes:
+    - name: config-volume
+      configMap:
+        name: curator-config
