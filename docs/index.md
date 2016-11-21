@@ -1,7 +1,7 @@
 +++
 title = "Logging with the Elastic Stack"
 description = "The Elastic stack, also known as the ELK stack, has become a wide-spread tool for aggregating logs. This recipe helps you to set it up in Kubernetes."
-date = "2016-10-31"
+date = "2016-11-21"
 type = "page"
 weight = 50
 categories = ["recipes"]
@@ -40,3 +40,9 @@ Now set `filebeat-*` for `index pattern`.
 Then, we can choose `json.time` for `time-field name` below.
 
 All set! You can now use Kibana to access your logs including filtering logs based on pod names and namespaces.
+
+## Configuring Curator to change log retention
+
+Included in this recipe, there is a Scheduled Job running [Curator](https://github.com/elastic/curator) once a day to clean up your logs. The pod is set to run at 1 minute past midnight and delete indices that are older than 3 days.
+
+You can change this by editing the ConfigMap named `curator-config`. The definition of the `action_file.yaml` is quite self-explaining for simple set ups. For more advanced configuration options, please consult the [Curator Documentation](https://www.elastic.co/guide/en/elasticsearch/client/curator/current/index.html).
