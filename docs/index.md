@@ -4,7 +4,7 @@ description = "The Elastic stack, also known as the ELK stack, has become a wide
 date = "2016-11-21"
 type = "page"
 weight = 50
-categories = ["recipes"]
+tags = ["recipe"]
 +++
 
 # Logging with the Elastic Stack
