@@ -10,7 +10,7 @@ spec:
         component: filebeat
     spec:
       containers:
-      - image: giantswarm/filebeat
+      - image: giantswarm/filebeat:5.0.2
         name: filebeat
         env:
         resources:
