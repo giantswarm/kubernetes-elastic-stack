@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-basic-auth
+  namespace: logging
+  labels:
+    app: kibana
+    component: basic-auth
+data:
+  Caddyfile: |
+    :80
+    gzip
+    log stdout
+    errors stdout
+
+    basicauth / admin password
+    proxy / kibana:5601
+    # see https://caddyserver.com/docs/tls for automatic https
+    tls off
