@@ -15,6 +15,7 @@ spec:
           "name": "sysctl",
             "image": "busybox",
             "command": ["sysctl", "-w", "vm.max_map_count=262144"],
+            "imagePullPolicy": "IfNotPresent",
             "securityContext": {
               "privileged": true
             }
