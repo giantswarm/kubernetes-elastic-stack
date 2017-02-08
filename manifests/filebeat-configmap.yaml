@@ -24,7 +24,7 @@ data:
 
     output.elasticsearch:
       hosts: ["elasticsearch:9200"]
-
+      template.enabled: true
       template.name: "filebeat"
       template.path: "filebeat.template.json"
       template.overwrite: false

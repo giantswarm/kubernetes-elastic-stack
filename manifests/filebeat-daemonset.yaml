@@ -10,7 +10,7 @@ spec:
         component: filebeat
     spec:
       containers:
-      - image: giantswarm/filebeat:5.0.2
+      - image: giantswarm/filebeat:5.2.0
         name: filebeat
         env:
         resources:
@@ -21,7 +21,7 @@ spec:
             cpu: 100m
         volumeMounts:
         - name: containers
-          mountPath: /var/lib/docker/containers
+          mountPath: /hostfs/var/lib/docker/containers
         # - name: hostlog
         #   mountPath: /varlog
         - name: config-volume
