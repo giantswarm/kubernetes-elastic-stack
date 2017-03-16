@@ -1,0 +1,78 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  namespace: logging
+spec:
+  template:
+    metadata:
+      labels:
+        component: elasticsearch
+        role: master
+      annotations:
+        # see https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
+        # and https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-configuration-memory.html#mlockall
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+          "name": "sysctl",
+            "image": "busybox",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sysctl", "-w", "vm.max_map_count=262144"],
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]'
+    spec:
+      containers:
+      - name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch:5.2.2
+        imagePullPolicy: IfNotPresent
+        # workarounds until https://github.com/kubernetes/kubernetes/issues/30120
+        env:
+        - name: cluster_name
+          value: kubernetes-cluster
+        - name: bootstrap_memory_lock
+          value: "false"
+          #^ unless ulimits for "memlock" can be set via kubernetes
+          # see https://github.com/kubernetes/kubernetes/issues/3595
+        # - name: transport.host
+        #   value: 127.0.0.1
+        # - name: discovery.zen.ping.unicast.hosts
+        #   value: elasticsearch_other
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms1g -Xmx1g"
+        ports:
+        - containerPort: 9200
+          name: api
+          protocol: TCP
+        # - containerPort: 9300
+        #   name: transport
+        #   protocol: TCP
+        resources:
+          # keep request = limit to keep this container in guaranteed class
+          limits:
+            cpu: 1000m
+            memory: 2G
+          requests:
+            cpu: 1000m
+            memory: 1G
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+            - IPC_LOCK
+            - SYS_RESOURCE
+        # FIXME add probes
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/elasticsearch/config
+        - name: data
+          mountPath: /usr/share/elasticsearch/data
+      volumes:
+      - name: config
+        configMap:
+          name: elasticsearch
+      - name: "data"
+        emptyDir:
+          medium: ""

@@ -21,13 +21,11 @@ kubectl get --all-namespaces services,pods
 
 ```bash
 minikube ssh
-# sudo sysctl -w vm.max_map_count=262144
-# cat /proc/sys/vm/max_map_count
 
-sudo sh -c "echo \"EXTRA_ARGS=' --log-opt labels=io.kubernetes.container.hash,io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid'\" >> /var/lib/boot2docker/profile"
-# --label provider=kvm
+sudo sh -c "sed -i 's/^ExecStart=\/usr\/bin\/docker daemon.*$/& --log-opt labels=io.kubernetes.container.hash,io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid/' /etc/systemd/system/docker.service"
 
-sudo /etc/init.d/docker restart
+sudo systemctl daemon-reload
+sudo systemctl restart docker.service
 ```
 
 ## Logging with Elasticsearch and Filebeat

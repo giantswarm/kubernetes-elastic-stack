@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: eventrouter
+  namespace: logging
+spec:
+  # TODO - Set to 2 when ConfigMap locking is merged ~1.7
+  # https://github.com/kubernetes/kubernetes/pull/42666
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: eventrouter
+    spec:
+      containers:
+      - name: eventrouter
+        # image: gcr.io/heptio-images/eventrouter:v0.1
+        image: giantswarm/eventrouter:0.1.2
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: config
+          mountPath: /etc/eventrouter
+      volumes:
+      - name: config
+        configMap:
+          name: eventrouter
