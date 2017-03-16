@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat
+  namespace: logging
+  labels:
+    component: filebeat
+data:
+  filebeat.yml: |
+    filebeat.prospectors:
+
+    # log lines from host
+    - input_type: log
+      tags:
+      - host
+      paths:
+      - "/hostfs/var/log"
+      - "/hostfs/var/log/*"
+      - "/hostfs/var/log/*/*"
+      # - "/hostfs/var/log/dmesg"
+      # - "/hostfs/var/log/syslog"
+      exclude_files:
+      - '\.[0-9]$'
+      - '\.[0-9]\.gz$'
+
+    # log lines from containers
+    - input_type: log
+      tags:
+      - docker
+      paths:
+      - /hostfs/var/lib/docker/containers/*/*-json.log
+      json:
+        keys_under_root: false
+        message_key: log
+        add_error_key: true
+      multiline:
+        pattern: '^[[:space:]]+|^Caused by:'
+        negate: false
+        match: after
+      # processors:
+      # - decode_json_fields:
+      #     # fields: ["log", "metadata", "json.log"]
+      #     fields: ["json.log"]
+      #     target: "test"
+
+    output.elasticsearch:
+      hosts: ["elasticsearch:9200"]
+      template.name: "filebeat"
+      template.path: "filebeat.template.json"
+      template.overwrite: true
+
+    # Available log levels are: critical, error, warning, info, debug
+    logging.level: info
