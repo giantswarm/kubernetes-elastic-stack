@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd
+  namespace: logging
+  labels:
+    component: fluentd
+data:
+  fluent.conf: |
+
+    # Fluentd configuration
+    # http://docs.fluentd.org/v0.12/articles/config-file
+
+    <source>
+      @type tail
+      path /host/var/log/containers/*.log
+      pos_file /host/var/log/es-containers.log.pos
+      time_format %Y-%m-%dT%H:%M:%S.%N
+      tag kubernetes.*
+      format json
+      read_from_head true
+      keep_time_key true
+    </source>
+
+
+    # Prometheus plugins
+    # https://github.com/kazegusuri/fluent-plugin-prometheus#usage
+
+    <source>
+      @type prometheus
+    </source>
+
+    <source>
+      @type prometheus_monitor
+    </source>
+
+    <filter **>
+      @type prometheus
+      <metric>
+        name fluentd_records_total
+        type counter
+        desc The total number of records read by fluentd.
+      </metric>
+    </filter>
+
+
+    # Kubernetes metadata filter
+    # https://github.com/kazegusuri/fluent-plugin-prometheus#usage
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      kubernetes_url https://kubernetes.default.svc
+      verify_ssl true
+      preserve_json_log true
+    </filter>
+
+
+    # Elasticsearch plugin
+    # https://github.com/uken/fluent-plugin-elasticsearch#usage
+
+    <match **>
+      @type elasticsearch
+      @log_level info
+      hosts elasticsearch:9200
+      reload_on_failure true
+      reconnect_on_error true
+      disable_retry_limit
+      logstash_format true
+      logstash_prefix fluentd
+      include_tag_key true
+    </match>

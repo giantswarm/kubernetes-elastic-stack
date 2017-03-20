@@ -1,0 +1,51 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: logging
+spec:
+  # selector:
+  #   matchLabels:
+  #     app: deis-logger-fluentd
+  #     heritage: deis
+  template:
+    metadata:
+      name: fluentd
+      labels:
+        component: fluentd
+    spec:
+      # serviceAccount: deis-logger-fluentd
+      containers:
+      - name: fluentd
+        image: giantswarm/fluentd-kubernetes:0.1.0-testing4
+        imagePullPolicy: IfNotPresent
+        # imagePullPolicy: Always
+        env:
+        - name: DEBUG
+          value: "true"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/fluent
+        - name: host-var-log
+          mountPath: /host/var/log
+        - name: minikube-var-lib-docker-containers
+          mountPath: /mnt/sda1/var/lib/docker/containers
+      volumes:
+      - name: config
+        configMap:
+          name: fluentd
+      - name: host-var-log
+        hostPath:
+          path: /var/log
+      # - name: host-var-lib-docker-containers
+      #   hostPath:
+      #     path: /var/lib/docker/containers
+      # workaround for minikube
+      # see https://github.com/kubernetes/minikube/issues/876
+      # (also /var/log/containers/?)
+      - name: host-var-lib-docker-containers
+        hostPath:
+          path: /mnt/sda1/var/lib/docker/containers
+      - name: minikube-var-lib-docker-containers
+        hostPath:
+          path: /mnt/sda1/var/lib/docker/containers
