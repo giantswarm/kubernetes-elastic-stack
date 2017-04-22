@@ -9,7 +9,7 @@ See [docs](docs/index.md) for full recipe content.
 > If some webpages don't show up immediately wait a bit and reload. Also the Kubernetes Dashboard needs reloading to update its view.
 
 ```bash
-minikube start
+minikube start --memory 4096
 # --vm-driver kvm
 
 minikube dashboard
@@ -17,7 +17,7 @@ minikube dashboard
 kubectl get --all-namespaces services,pods
 ```
 
-## Extra configuration for Elasticsearch and Filebeat
+## Extra configuration for Filebeat
 
 ```bash
 minikube ssh
@@ -28,7 +28,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker.service
 ```
 
-## Logging with Elasticsearch and Filebeat
+## Logging with Elasticsearch and filebeat, fluentd or fluent-bit
 
 ```bash
 kubectl apply \
