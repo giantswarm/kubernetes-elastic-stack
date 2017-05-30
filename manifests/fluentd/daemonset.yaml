@@ -17,7 +17,7 @@ spec:
       # serviceAccount: deis-logger-fluentd
       containers:
       - name: fluentd
-        image: giantswarm/fluentd-kubernetes:0.1.0-testing4
+        image: giantswarm/fluentd-kubernetes:0.1.1
         imagePullPolicy: IfNotPresent
         # imagePullPolicy: Always
         env:
@@ -27,9 +27,13 @@ spec:
         - name: config
           mountPath: /etc/fluent
         - name: host-var-log
-          mountPath: /host/var/log
+          mountPath: /var/log
+        - name: host-var-lib-docker-containers
+          mountPath: /var/lib/docker/containers
+          # readOnly: true
         - name: minikube-var-lib-docker-containers
           mountPath: /mnt/sda1/var/lib/docker/containers
+      # terminationGracePeriodSeconds: 10
       volumes:
       - name: config
         configMap:
@@ -37,15 +41,9 @@ spec:
       - name: host-var-log
         hostPath:
           path: /var/log
-      # - name: host-var-lib-docker-containers
-      #   hostPath:
-      #     path: /var/lib/docker/containers
-      # workaround for minikube
-      # see https://github.com/kubernetes/minikube/issues/876
-      # (also /var/log/containers/?)
       - name: host-var-lib-docker-containers
         hostPath:
-          path: /mnt/sda1/var/lib/docker/containers
+          path: /var/lib/docker/containers
       - name: minikube-var-lib-docker-containers
         hostPath:
           path: /mnt/sda1/var/lib/docker/containers

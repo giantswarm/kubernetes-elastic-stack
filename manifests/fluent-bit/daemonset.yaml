@@ -34,24 +34,24 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /fluent-bit/etc
-        - name: varlog
+        - name: host-var-log
           mountPath: /var/log
-        - name: varlibdockercontainers
+        - name: host-var-lib-docker-containers
           mountPath: /var/lib/docker/containers
           # readOnly: true
-        - name: minikubevarlibdockercontainers
+        - name: minikube-var-lib-docker-containers
           mountPath: /mnt/sda1/var/lib/docker/containers
       terminationGracePeriodSeconds: 10
       volumes:
       - name: config
         configMap:
           name: fluent-bit
-      - name: varlog
+      - name: host-var-log
         hostPath:
           path: /var/log
-      - name: varlibdockercontainers
+      - name: host-var-lib-docker-containers
         hostPath:
           path: /var/lib/docker/containers
-      - name: minikubevarlibdockercontainers
+      - name: minikube-var-lib-docker-containers
         hostPath:
           path: /mnt/sda1/var/lib/docker/containers

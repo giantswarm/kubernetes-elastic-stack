@@ -14,11 +14,9 @@ data:
       tags:
       - host
       paths:
-      - "/hostfs/var/log"
-      - "/hostfs/var/log/*"
-      - "/hostfs/var/log/*/*"
-      # - "/hostfs/var/log/dmesg"
-      # - "/hostfs/var/log/syslog"
+      - "/var/log"
+      - "/var/log/*"
+      - "/var/log/*/*"
       exclude_files:
       - '\.[0-9]$'
       - '\.[0-9]\.gz$'
@@ -28,7 +26,7 @@ data:
       tags:
       - docker
       paths:
-      - /hostfs/var/lib/docker/containers/*/*-json.log
+      - /var/lib/docker/containers/*/*-json.log
       json:
         keys_under_root: false
         message_key: log
