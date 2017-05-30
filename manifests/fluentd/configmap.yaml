@@ -17,6 +17,7 @@ data:
       # path /var/log/containers/*.log,/var/log/*.log
       # FIXME find better place for pos_files
       pos_file /var/log/es-containers.log.pos
+
       time_format %Y-%m-%dT%H:%M:%S.%N
       tag kubernetes.*
       format json

@@ -408,15 +408,9 @@ spec:
         component: filebeat
     spec:
       containers:
-<<<<<<< HEAD:manifests/filebeat/daemonset.yaml
       - name: filebeat
         image: giantswarm/filebeat:5.2.2
         imagePullPolicy: IfNotPresent
-=======
-      - image: giantswarm/filebeat:5.2.0
-        name: filebeat
-        env:
->>>>>>> master:manifests/filebeat-daemonset.yaml
         resources:
           # keep request = limit to keep this container in guaranteed class
           limits:
@@ -424,15 +418,7 @@ spec:
           requests:
             cpu: 100m
         volumeMounts:
-<<<<<<< HEAD:manifests/filebeat/daemonset.yaml
         - name: config
-=======
-        - name: containers
-          mountPath: /hostfs/var/lib/docker/containers
-        # - name: hostlog
-        #   mountPath: /varlog
-        - name: config-volume
->>>>>>> master:manifests/filebeat-daemonset.yaml
           mountPath: /etc/filebeat
           readOnly: true
         - name: hostfs-var-lib-docker-containers
