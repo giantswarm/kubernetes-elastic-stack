@@ -7,7 +7,7 @@ At first start a fresh Minikube environment.
 
 ```bash
 minikube delete
-minikube start --vm-driver kvm --memory 4096 --kubernetes-version "v1.6.0"
+minikube start --memory 4096
 ```
 
 Then run from this directory:
