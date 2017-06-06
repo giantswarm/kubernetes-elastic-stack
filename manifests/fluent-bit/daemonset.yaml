@@ -1,31 +1,39 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: fluentd
+  name: fluent-bit
+  # namespace: kube-system
   namespace: logging
+  labels:
+    k8s-app: fluent-bit-logging
+    version: v1
+    kubernetes.io/cluster-service: "true"
 spec:
-  # selector:
-  #   matchLabels:
-  #     app: deis-logger-fluentd
-  #     heritage: deis
   template:
     metadata:
-      name: fluentd
       labels:
-        component: fluentd
+        k8s-app: fluent-bit-logging
+        version: v1
+        kubernetes.io/cluster-service: "true"
     spec:
-      # serviceAccount: deis-logger-fluentd
       containers:
-      - name: fluentd
-        image: giantswarm/fluentd-kubernetes:0.1.1
-        imagePullPolicy: IfNotPresent
-        # imagePullPolicy: Always
+      - name: fluent-bit
+        image: fluent/fluent-bit:0.11.2
+        # image: fluent/fluent-bit-kubernetes-daemonset:latest
         env:
-        - name: DEBUG
-          value: "true"
+        - name:  FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.logging.svc"
+        - name:  FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        resources:
+          limits:
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
         volumeMounts:
         - name: config
-          mountPath: /etc/fluent
+          mountPath: /fluent-bit/etc
         - name: host-var-log
           mountPath: /var/log
         - name: host-var-lib-docker-containers
@@ -33,12 +41,11 @@ spec:
           # readOnly: true
         - name: minikube-var-lib-docker-containers
           mountPath: /mnt/sda1/var/lib/docker/containers
-      # terminationGracePeriodSeconds: 10
-
+      terminationGracePeriodSeconds: 10
       volumes:
       - name: config
         configMap:
-          name: fluentd
+          name: fluent-bit
       - name: host-var-log
         hostPath:
           path: /var/log

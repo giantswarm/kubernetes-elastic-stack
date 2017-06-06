@@ -13,6 +13,8 @@ spec:
       containers:
       - name: kibana
         image: kibana:5.2.2
+        # image: kibana:5.4.0
+        # image: docker.elastic.co/kibana/kibana:5.4.0
         imagePullPolicy: IfNotPresent
         resources:
           # keep request = limit to keep this container in guaranteed class

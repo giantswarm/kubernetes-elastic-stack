@@ -34,7 +34,9 @@ sudo systemctl restart docker.service
 kubectl apply \
   --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
 minikube service --namespace logging kibana
-  # for index pattern choose `filebeat-*` and `@json.time` for Time-field name
+  # for index pattern in Kibana choose `filebeat-*` and `@json.time` for Time-field name
+  # or `fluentd-*`
+  # or `fluent-bit-*`
 ```
 
 ## Turn down all logging components
