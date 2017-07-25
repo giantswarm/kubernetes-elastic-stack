@@ -2,6 +2,17 @@
 
 See [docs](docs/index.md) for full recipe content.
 
+Feature comparison of the log shippers in this repo:
+
+| Log Shipper | fluentd | fluent-bit | filebeat |
+| ----------- | ------- | ---------- | -------- |
+| rbac        | [x](manifests/fluentd/rbac.yaml) | tbd | tbd |
+| metadata    | [x](https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter) | tbd | tbd |
+
+
+
+
+
 # Local Setup
 
 ## Start a local Kubernetes using minikube

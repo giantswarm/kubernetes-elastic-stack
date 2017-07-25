@@ -2,7 +2,6 @@ apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: fluent-bit
-  # namespace: kube-system
   namespace: logging
   labels:
     k8s-app: fluent-bit-logging
@@ -18,8 +17,8 @@ spec:
     spec:
       containers:
       - name: fluent-bit
-        image: fluent/fluent-bit:0.11.2
-        # image: fluent/fluent-bit-kubernetes-daemonset:latest
+        # image: fluent/fluent-bit:0.11.2
+        image: fluent/fluent-bit:0.11.8
         env:
         - name:  FLUENT_ELASTICSEARCH_HOST
           value: "elasticsearch.logging.svc"

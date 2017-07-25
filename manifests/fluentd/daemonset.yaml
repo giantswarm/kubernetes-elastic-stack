@@ -4,37 +4,36 @@ metadata:
   name: fluentd
   namespace: logging
 spec:
-  # selector:
-  #   matchLabels:
-  #     app: deis-logger-fluentd
-  #     heritage: deis
   template:
     metadata:
       name: fluentd
       labels:
         component: fluentd
     spec:
-      # serviceAccount: deis-logger-fluentd
+      serviceAccountName: fluentd
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
       containers:
       - name: fluentd
-        image: giantswarm/fluentd-kubernetes:0.1.1
+        image: fluent/fluentd-kubernetes-daemonset:v0.12-alpine-elasticsearch
         imagePullPolicy: IfNotPresent
-        # imagePullPolicy: Always
         env:
+        - name:  FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.logging.svc"
+        - name:  FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
         - name: DEBUG
           value: "true"
         volumeMounts:
         - name: config
-          mountPath: /etc/fluent
+          mountPath: /fluentd/etc
         - name: host-var-log
           mountPath: /var/log
         - name: host-var-lib-docker-containers
           mountPath: /var/lib/docker/containers
-          # readOnly: true
         - name: minikube-var-lib-docker-containers
           mountPath: /mnt/sda1/var/lib/docker/containers
-      # terminationGracePeriodSeconds: 10
-
       volumes:
       - name: config
         configMap:
