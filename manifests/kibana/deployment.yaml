@@ -13,7 +13,7 @@ spec:
       containers:
       - name: kibana
         # image: kibana:5.2.2
-        image: kibana:5.4.0
+        image: kibana:5.5.2
         # image: docker.elastic.co/kibana/kibana:5.4.0
         imagePullPolicy: IfNotPresent
         resources:

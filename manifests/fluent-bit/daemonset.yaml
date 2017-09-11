@@ -18,7 +18,7 @@ spec:
       containers:
       - name: fluent-bit
         # image: fluent/fluent-bit:0.11.2
-        image: fluent/fluent-bit:0.11.8
+        image: fluent/fluent-bit:0.12
         env:
         - name:  FLUENT_ELASTICSEARCH_HOST
           value: "elasticsearch.logging.svc"

@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: kube-events
-        image: giantswarm/tiny-tools:0.1.0
+        image: giantswarm/tiny-tools:0.2.0
         imagePullPolicy: IfNotPresent
         resources:
           # keep request = limit to keep this container in guaranteed class

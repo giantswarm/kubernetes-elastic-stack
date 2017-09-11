@@ -22,7 +22,7 @@ spec:
           privileged: true
       containers:
       - name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:5.2.2
+        image: docker.elastic.co/elasticsearch/elasticsearch:5.5.2
         # image: docker.elastic.co/elasticsearch/elasticsearch:5.4.0
         # image: docker.elastic.co/elasticsearch/elasticsearch:6.0.0-alpha1
         imagePullPolicy: IfNotPresent
@@ -63,14 +63,36 @@ spec:
             - SYS_RESOURCE
         # FIXME add probes
         volumeMounts:
-        - name: config
-          mountPath: /usr/share/elasticsearch/config
+        - name: configes
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          subPath: elasticsearch.yml
+        - name: configjvm
+          mountPath: /usr/share/elasticsearch/config/jvm.options
+          subPath: jvm.options        
+        - name: configlog4j2
+          mountPath: /usr/share/elasticsearch/config/log4j2.properties
+          subPath: log4j2.properties       
         - name: data
           mountPath: /usr/share/elasticsearch/data
       volumes:
-      - name: config
+      - name: configes
         configMap:
           name: elasticsearch
+          items:
+          - key: elasticsearch.yml
+            path: elasticsearch.yml
+      - name: configjvm
+        configMap:
+          name: elasticsearch
+          items:
+          - key: jvm.options
+            path: jvm.options
+      - name: configlog4j2
+        configMap:
+          name: elasticsearch
+          items:
+          - key: log4j2.properties
+            path: log4j2.properties
       - name: "data"
         emptyDir:
           medium: ""

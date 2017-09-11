@@ -12,7 +12,7 @@ spec:
       containers:
       - name: filebeat
         # image: giantswarm/filebeat:5.2.2
-        image: docker.elastic.co/beats/filebeat:5.4.1
+        image: docker.elastic.co/beats/filebeat:5.5.2
         # image: docker.elastic.co/beats/filebeat:6.0.0-alpha1
         imagePullPolicy: IfNotPresent
         resources:

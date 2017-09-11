@@ -213,7 +213,7 @@ spec:
         spec:
           containers:
           - name: curator
-            image: bobrik/curator:4.2.6
+            image: bobrik/curator:5.1.1
             imagePullPolicy: IfNotPresent
             args: ["--config", "/etc/config/config.yml", "/etc/config/action_file.yml"]
             volumeMounts:
@@ -253,7 +253,7 @@ spec:
     spec:
       containers:
       - name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:5.2.2
+        image: docker.elastic.co/elasticsearch/elasticsearch:5.5.2
         imagePullPolicy: IfNotPresent
         # workarounds until https://github.com/kubernetes/kubernetes/issues/30120
         env:
@@ -292,14 +292,36 @@ spec:
             - SYS_RESOURCE
         # FIXME add probes
         volumeMounts:
-        - name: config
-          mountPath: /usr/share/elasticsearch/config
+        - name: configes
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          subPath: elasticsearch.yml
+        - name: configjvm
+          mountPath: /usr/share/elasticsearch/config/jvm.options
+          subPath: jvm.options        
+        - name: configlog4j2
+          mountPath: /usr/share/elasticsearch/config/log4j2.properties
+          subPath: log4j2.properties       
         - name: data
           mountPath: /usr/share/elasticsearch/data
       volumes:
-      - name: config
+      - name: configes
         configMap:
           name: elasticsearch
+          items:
+          - key: elasticsearch.yml
+            path: elasticsearch.yml
+      - name: configjvm
+        configMap:
+          name: elasticsearch
+          items:
+          - key: jvm.options
+            path: jvm.options
+      - name: configlog4j2
+        configMap:
+          name: elasticsearch
+          items:
+          - key: log4j2.properties
+            path: log4j2.properties
       - name: "data"
         emptyDir:
           medium: ""
@@ -323,7 +345,7 @@ metadata:
 spec:
   # TODO - Set to 2 when ConfigMap locking is merged ~1.7
   # https://github.com/kubernetes/kubernetes/pull/42666
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -409,7 +431,7 @@ spec:
     spec:
       containers:
       - name: filebeat
-        image: giantswarm/filebeat:5.2.2
+        image: docker.elastic.co/beats/filebeat:5.5.2
         imagePullPolicy: IfNotPresent
         resources:
           # keep request = limit to keep this container in guaranteed class
@@ -452,7 +474,7 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: kibana:5.2.2
+        image: kibana:5.5.2
         imagePullPolicy: IfNotPresent
         resources:
           # keep request = limit to keep this container in guaranteed class
@@ -499,7 +521,7 @@ spec:
     spec:
       containers:
       - name: kube-events
-        image: giantswarm/tiny-tools:0.1.0
+        image: giantswarm/tiny-tools:0.2.0
         imagePullPolicy: IfNotPresent
         resources:
           # keep request = limit to keep this container in guaranteed class
