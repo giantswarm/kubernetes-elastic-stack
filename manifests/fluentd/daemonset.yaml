@@ -2,27 +2,27 @@ apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: fluentd
-  namespace: logging
+  labels:
+    app: fluentd
 spec:
   template:
     metadata:
       name: fluentd
       labels:
-        component: fluentd
+        app: fluentd
     spec:
       serviceAccountName: fluentd
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
       containers:
       - name: fluentd
-        image: fluent/fluentd-kubernetes-daemonset:v0.12-alpine-elasticsearch
+        image: fluent/fluentd-kubernetes-daemonset:v0.12.33-elasticsearch
         imagePullPolicy: IfNotPresent
         env:
         - name:  FLUENT_ELASTICSEARCH_HOST
-          value: "elasticsearch.logging.svc"
+          value: "elasticsearch.default.svc"
         - name:  FLUENT_ELASTICSEARCH_PORT
           value: "9200"
+        - name:  FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
+          value: "fluentd"
         - name: DEBUG
           value: "true"
         volumeMounts:
@@ -32,8 +32,11 @@ spec:
           mountPath: /var/log
         - name: host-var-lib-docker-containers
           mountPath: /var/lib/docker/containers
+          # readOnly: true
         - name: minikube-var-lib-docker-containers
           mountPath: /mnt/sda1/var/lib/docker/containers
+        # securityContext:
+        #   runAsUser: 0
       volumes:
       - name: config
         configMap:

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana
+  labels:
+    app: kibana
+data:
+  kibana.yml: |
+    server:
+      name: "full-stack-example"
+      port: 127.0.0.1:5601
+    elasticsearch.url: "http://elasticsearch:9200"

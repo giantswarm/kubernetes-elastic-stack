@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metricbeat-modules
+  labels:
+    app: metricbeat
+data:
+  docker.yml: |
+    - module: docker
+      metricsets: ["container", "cpu", "diskio", "healthcheck", "info", "memory", "network"]
+      hosts: ["unix:///var/run/docker.sock"]
+      period: 10s
+
+      # To connect to Docker over TLS you must specify a client and CA certificate.
+      #ssl:
+        #certificate_authority: "/etc/pki/root/ca.pem"
+        #certificate:           "/etc/pki/client/cert.pem"
+        #key:                   "/etc/pki/client/cert.key"
+
+  kubernetes.yml: |
+    # Node metrics, from kubelet:
+    - module: kubernetes
+      metricsets:
+        - node
+        - system
+        - pod
+        - container
+        - volume
+      period: 10s
+      hosts: ["localhost:10255"]
+
+    # State metrics from kube-state-metrics service:
+    - module: kubernetes
+      enabled: false
+      metricsets:
+        - state_node
+        - state_deployment
+        - state_replicaset
+        - state_pod
+        - state_container
+      period: 10s
+      hosts: ["kube-state-metrics:8080"]
+
+    # Kubernetes events
+    - module: kubernetes
+      enabled: false
+      metricsets:
+        - event
+
+  system.yml: |
+    - module: system
+      period: 10s
+      metricsets:
+        - cpu
+        - load
+        - memory
+        - network
+        - process
+        - process_summary
+        #- core
+        #- diskio
+        #- socket
+      processes: ['.*']
+      process.include_top_n:
+        by_cpu: 5      # include top 5 processes by CPU
+        by_memory: 5   # include top 5 processes by memory
+      # cpu_ticks: true
+      # process.cgroups.enabled: true
+
+    - module: system
+      period: 1m
+      metricsets:
+        - filesystem
+        - fsstat
+      processors:
+      - drop_event.when.regexp:
+          system.filesystem.mount_point: '^/(sys|cgroup|proc|dev|etc|host|lib)($|/)'

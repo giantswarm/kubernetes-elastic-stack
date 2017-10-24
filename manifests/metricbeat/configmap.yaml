@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metricbeat
+  labels:
+    app: metricbeat
+data:
+  metricbeat.yml: |
+    metricbeat.config.modules:
+      path: ${path.config}/modules.d/*.yml
+      reload.enabled: false
+
+    setup:
+      dashboards.enabled: true
+      kibana:
+        host: "kibana:5601"
+        username: elastic
+        password: changeme
+
+    processors:
+    - add_cloud_metadata:
+
+    output.elasticsearch:
+      hosts: ['elasticsearch:9200']
+      username: elastic
+      password: changeme
+
+    # metricbeat.config.modules:
+    # #Modules are enabled by reading the .modules.d sub directory. Changes to these will automatically be detected and reflected.
+    #   path: ${path.config}/modules.d/*.yml
+    #   reload.period: 10s
+    #   reload.enabled: true
+    # #All data indexed to Elasticsearch
+    # output.elasticsearch:
+    #   hosts: ["elasticsearch:9200"]
+    # logging.to_files: false
