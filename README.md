@@ -2,16 +2,6 @@
 
 See [docs](docs/index.md) for full recipe content.
 
-Feature comparison of the log shippers in this repo:
-
-| Log Shipper | fluentd | fluent-bit | filebeat |
-| ----------- | ------- | ---------- | -------- |
-| rbac        | [x](manifests/fluentd/rbac.yaml) | tbd | tbd |
-| metadata    | [x](https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter) | tbd | tbd |
-
-
-
-
 
 # Local Setup
 
@@ -28,32 +18,24 @@ minikube dashboard
 kubectl get --all-namespaces services,pods
 ```
 
-## Extra configuration for Filebeat
-
-```bash
-minikube ssh
-
-sudo sh -c "sed -i 's/^ExecStart=\/usr\/bin\/docker daemon.*$/& --log-opt labels=io.kubernetes.container.hash,io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid/' /etc/systemd/system/docker.service"
-
-sudo systemctl daemon-reload
-sudo systemctl restart docker.service
-```
-
-## Logging with Elasticsearch and filebeat, fluentd or fluent-bit
+## Logging with Elasticsearch and fluentd
 
 ```bash
 kubectl apply \
   --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
-minikube service --namespace logging kibana
-  # for index pattern in Kibana choose `filebeat-*` and `@json.time` for Time-field name
-  # or `fluentd-*`
-  # or `fluent-bit-*`
+
+minikube service kibana
 ```
+
+For the index pattern in Kibana choose `fluentd-*`, then switch to the "Discover" view.
+Every log line by containers running within the Kubernetes cluster is enhenced by metadata like `namespace_name`, `labels` and so on. This way it is easy to group and filter down on specific parts.
+
 
 ## Turn down all logging components
 
 ```bash
-kubectl delete namespace logging
+kubectl delete \
+  --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
 ```
 
 To delete the whole local Kubernetes cluster use this:
