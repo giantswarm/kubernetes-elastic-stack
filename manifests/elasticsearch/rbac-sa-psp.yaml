@@ -1,0 +1,70 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+rules:
+- apiGroups:
+  - extensions
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - elasticsearch
+  verbs:
+  - use
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+subjects:
+- kind: ServiceAccount
+  name: elasticsearch
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: elasticsearch
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+---
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+spec:
+  fsGroup:
+    rule: RunAsAny
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  allowedCapabilities:
+  - 'IPC_LOCK'
+  - 'SYS_RESOURCE'
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+  hostPID: true
+  hostIPC: true
+  hostNetwork: true
+  hostPorts:
+  - min: 1
+    max: 65536

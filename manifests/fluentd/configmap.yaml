@@ -2,34 +2,51 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: fluentd
-  namespace: logging
+  # namespace: logging-fluentd
   labels:
-    component: fluentd
+    app: fluentd
 data:
+  # see also https://github.com/kubernetes/kubernetes/blob/master/cluster/addons/fluentd-elasticsearch/fluentd-es-image/td-agent.conf
+  # https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter
+  # https://groups.google.com/forum/#!msg/fluentd/CMZf4cTPlow/GADnOFIsBQAJ
+  # https://github.com/fabric8io/docker-fluentd-kubernetes/issues/11
+  # > Yeah, I use this plugin to regroup multilines (with multiline_start_regexp parameter) from my JSON docker logs on kubernetes (with ES /Fluentd / Kibana associated ), an then I parse them with fluent-plugin-parser , so I can handle correctly traceback and other multilines logs in elasticsearch.
+  #
+  # fluent-plugin-concat, fluent-plugin-parser, rewrite_tag_filter
+  # https://github.com/fluent/fluent-plugin-rewrite-tag-filter
+  #
+  # http://dev.haufe.io/fluentd-log-parsing/ !!
+  #
+  # fluent-plugin-grok-parser
+  #
+  # https://github.com/fluent/fluentd/blob/master/ChangeLog
+
   fluent.conf: |
     @include kubernetes.conf
 
     <match **>
-       type elasticsearch
-       log_level info
-       include_tag_key true
-       host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
-       port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
-       scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'http'}"
-       user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
-       password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
-       reload_connections "#{ENV['FLUENT_ELASTICSEARCH_RELOAD_CONNECTIONS'] || 'true'}"
-       logstash_prefix "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX'] || 'logstash'}"
-       logstash_format true
-       buffer_chunk_limit 2M
-       buffer_queue_limit 32
-       flush_interval 5s
-       max_retry_wait 30
-       disable_retry_limit
-       num_threads 8
+      type elasticsearch
+      log_level info
+      include_tag_key true
+      host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
+      port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
+      scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'http'}"
+      # user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+      # password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+      reload_connections "#{ENV['FLUENT_ELASTICSEARCH_RELOAD_CONNECTIONS'] || 'true'}"
+      logstash_prefix "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX'] || 'logstash'}"
+      logstash_format true
+      buffer_chunk_limit 2M
+      buffer_queue_limit 32
+      flush_interval 5s
+      max_retry_wait 30
+      disable_retry_limit
+      num_threads 8
     </match>
 
   kubernetes.conf: |
+    # https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter/blob/master/README.md
+
     <match fluent.**>
       type null
     </match>
@@ -39,6 +56,7 @@ data:
       path /var/log/containers/*.log
       pos_file /var/log/fluentd-containers.log.pos
       time_format %Y-%m-%dT%H:%M:%S.%NZ
+      # tag_to_kubernetes_name_regexp \.(?<pod_name>[^\._]+)_(?<namespace>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$</pod>)
       tag kubernetes.*
       format json
       read_from_head true
@@ -152,6 +170,22 @@ data:
     <filter kubernetes.**>
       type kubernetes_metadata
     </filter>
+
+    <filter kubernetes.var.log.containers.nginx-ingress-controller-**>
+      # https://github.com/kubernetes/ingress/tree/master/controllers/nginx#log-format
+      type parser
+      reserve_data true
+      hash_value_field parsed
+      key_name log
+      format /^(?<remote_addr>[^ ]*) - \[(?<proxy_add_x_forwarded_for>[^\]]*)\] - (?<remote_user>[^ ]*) \[(?<time_local>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*) +\S*)?" (?<status>[^ ]*) (?<body_bytes_sent>[^ ]*)(?: "(?<http_referer>[^\"]*)" "(?<http_user_agent>[^\"]*)")?.*$/
+    </filter>
+
+    # <filter kubernetes.var.log.containers.nginx-ingress-controller-**>
+    #   type record_transformer
+    #   <record>
+    #     message "#{parsed.method} #{parsed.path} #{parsed.status}"
+    #   </record>
+    # </filter>
 
   # prometheus.conf: |
   #   # https://github.com/kazegusuri/fluent-plugin-prometheus#usage

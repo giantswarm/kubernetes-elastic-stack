@@ -2,14 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kibana
-  namespace: logging
   labels:
-    component: kibana
+    app: kibana
+    stack: logging
 spec:
   type: NodePort
   ports:
-  - port: 5601
-    protocol: TCP
-    targetPort: ui
+  - name: "ui"
+    port: 5601
+    targetPort: 5601
   selector:
-    component: kibana
+    app: kibana
+    stack: logging

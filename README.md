@@ -2,15 +2,10 @@
 
 See [docs](docs/index.md) for full recipe content.
 
-Feature comparison of the log shippers in this repo:
 
-| Log Shipper | fluentd | fluent-bit | filebeat |
-| ----------- | ------- | ---------- | -------- |
-| rbac        | [x](manifests/fluentd/rbac.yaml) | tbd | tbd |
-| metadata    | [x](https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter) | tbd | tbd |
+This setup is similar to the [`Full Stack Example`](https://github.com/elastic/examples/tree/master/Miscellaneous/docker/full_stack_example), but adopted to be run on a Kubernetes cluster.
 
-
-
+There is no access control for the Kibana web interface. If you want to run this in public you need to secure your setup. The provided manifests here are for demonstration purposes only.
 
 
 # Local Setup
@@ -21,40 +16,34 @@ Feature comparison of the log shippers in this repo:
 
 ```bash
 minikube start --memory 4096
-# --vm-driver kvm
 
 minikube dashboard
 # maybe wait a bit and retry
 kubectl get --all-namespaces services,pods
 ```
 
-## Extra configuration for Filebeat
-
-```bash
-minikube ssh
-
-sudo sh -c "sed -i 's/^ExecStart=\/usr\/bin\/docker daemon.*$/& --log-opt labels=io.kubernetes.container.hash,io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace,io.kubernetes.pod.uid/' /etc/systemd/system/docker.service"
-
-sudo systemctl daemon-reload
-sudo systemctl restart docker.service
-```
-
-## Logging with Elasticsearch and filebeat, fluentd or fluent-bit
+## Logging with Elasticsearch and fluentd
 
 ```bash
 kubectl apply \
   --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
-minikube service --namespace logging kibana
-  # for index pattern in Kibana choose `filebeat-*` and `@json.time` for Time-field name
-  # or `fluentd-*`
-  # or `fluent-bit-*`
+
+minikube service kibana
 ```
+
+For the index pattern in Kibana choose `fluentd-*`, then switch to the "Discover" view.
+Every log line by containers running within the Kubernetes cluster is enhanced by meta data like `namespace_name`, `labels` and so on. This way it is easy to group and filter down on specific parts.
+
 
 ## Turn down all logging components
 
 ```bash
-kubectl delete namespace logging
+kubectl delete \
+  --filename https://raw.githubusercontent.com/giantswarm/kubernetes-elastic-stack/master/manifests-all.yaml
 ```
+
+FIXME alternatively
+--selector stack=logging
 
 To delete the whole local Kubernetes cluster use this:
 

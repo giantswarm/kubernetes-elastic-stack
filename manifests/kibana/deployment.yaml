@@ -2,30 +2,37 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: kibana
-  namespace: logging
+  labels:
+    app: kibana
+    stack: logging
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
-        component: kibana
+        app: kibana
+        stack: logging
     spec:
+      # FIXME
+      # healthcheck + resources
       containers:
       - name: kibana
-        # image: kibana:5.2.2
-        image: kibana:5.4.0
-        # image: docker.elastic.co/kibana/kibana:5.4.0
+        image: docker.elastic.co/kibana/kibana-oss:6.0.0
         imagePullPolicy: IfNotPresent
-        resources:
-          # keep request = limit to keep this container in guaranteed class
-          limits:
-            cpu: 100m
-          requests:
-            cpu: 100m
         env:
-        - name: "ELASTICSEARCH_URL"
-          value: "http://elasticsearch:9200"
+        - name: ELASTICSEARCH_PASSWORD
+          value: changeme
         ports:
         - containerPort: 5601
-          name: ui
-          protocol: TCP
+        resources: {}
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/kibana/kibana.yml
+          subPath: kibana.yml
+      restartPolicy: Always
+      volumes:
+      - name: config
+        configMap:
+          name: kibana
