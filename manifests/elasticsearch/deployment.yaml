@@ -4,6 +4,7 @@ metadata:
   name: elasticsearch
   labels:
     app: elasticsearch
+    stack: logging
 spec:
   replicas: 1
   strategy:
@@ -12,7 +13,9 @@ spec:
     metadata:
       labels:
         app: elasticsearch
+        stack: logging
     spec:
+      serviceAccountName: elasticsearch
       initContainers:
       - name: set-vm-max-map-count
         image: busybox
@@ -29,7 +32,7 @@ spec:
           mountPath: /usr/share/elasticsearch/data
       containers:
       - name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:6.0.0-rc1
+        image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.0.0
         imagePullPolicy: IfNotPresent
         env:
         - name: ES_JAVA_OPTS
@@ -55,9 +58,9 @@ spec:
       - name: config
         configMap:
           name: elasticsearch
-      # - name: data
-      #   persistentVolumeClaim:
-      #     claimName: elasticsearch
       - name: data
-        hostPath:
-          path: /srv/elasticsearch-data
+        persistentVolumeClaim:
+          claimName: elasticsearch
+      # - name: data
+      #   hostPath:
+      #     path: /srv/elasticsearch-data

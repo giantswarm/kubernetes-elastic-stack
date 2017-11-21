@@ -1,0 +1,94 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: fluentd
+  namespace: default
+  labels:
+    app: fluentd
+    stack: logging
+rules:
+- apiGroups:
+  - extensions
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - fluentd
+  verbs:
+  - use
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: fluentd
+  namespace: default
+  labels:
+    app: fluentd
+    stack: logging
+subjects:
+- kind: ServiceAccount
+  name: fluentd
+roleRef:
+  kind: Role
+  name: fluentd
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluentd
+  labels:
+    app: fluentd
+    stack: logging
+---
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: fluentd
+  labels:
+    app: fluentd
+    stack: logging
+spec:
+  fsGroup:
+    rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - emptyDir
+  - secret
+  - downwardAPI
+  - configMap
+  - persistentVolumeClaim
+  - projected
+  - hostPath
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: fluentd
+  labels:
+    app: fluentd
+    stack: logging
+rules:
+- apiGroups: [""] # core API group
+  resources: ["pods", "namespaces"]
+  verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: fluentd
+  labels:
+    app: fluentd
+    stack: logging
+subjects:
+- kind: ServiceAccount
+  name: fluentd
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: fluentd
+  apiGroup: rbac.authorization.k8s.io

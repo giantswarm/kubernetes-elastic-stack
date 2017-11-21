@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+spec:
+  rules:
+  -
+    # host: elasticsearch.minikube.localnet
+    host: elasticsearch.j9egj.k8s.ginger.eu-central-1.aws.gigantic.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: elasticsearch
+          servicePort: 9200

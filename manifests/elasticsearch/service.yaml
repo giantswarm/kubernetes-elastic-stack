@@ -4,7 +4,9 @@ metadata:
   name: elasticsearch
   labels:
     app: elasticsearch
+    stack: logging
 spec:
+  # needed on minikube
   type: NodePort
   ports:
   - name: "api"
@@ -12,3 +14,4 @@ spec:
     targetPort: 9200
   selector:
     app: elasticsearch
+    stack: logging

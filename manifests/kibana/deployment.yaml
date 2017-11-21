@@ -4,6 +4,7 @@ metadata:
   name: kibana
   labels:
     app: kibana
+    stack: logging
 spec:
   replicas: 1
   strategy:
@@ -12,12 +13,13 @@ spec:
     metadata:
       labels:
         app: kibana
+        stack: logging
     spec:
       # FIXME
       # healthcheck + resources
       containers:
       - name: kibana
-        image: docker.elastic.co/kibana/kibana:6.0.0-rc1
+        image: docker.elastic.co/kibana/kibana-oss:6.0.0
         imagePullPolicy: IfNotPresent
         env:
         - name: ELASTICSEARCH_PASSWORD

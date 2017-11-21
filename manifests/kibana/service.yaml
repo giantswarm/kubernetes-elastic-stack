@@ -4,6 +4,7 @@ metadata:
   name: kibana
   labels:
     app: kibana
+    stack: logging
 spec:
   type: NodePort
   ports:
@@ -12,3 +13,4 @@ spec:
     targetPort: 5601
   selector:
     app: kibana
+    stack: logging

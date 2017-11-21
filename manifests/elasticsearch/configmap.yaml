@@ -4,6 +4,7 @@ metadata:
   name: elasticsearch
   labels:
     app: elasticsearch
+    stack: logging
 data:
   elasticsearch.yml: |
     cluster.name: full-stack-cluster
