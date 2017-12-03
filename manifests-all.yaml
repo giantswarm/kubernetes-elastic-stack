@@ -1,5 +1,76 @@
 # Derived from ./manifests
 ---
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+rules:
+- apiGroups:
+  - extensions
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - elasticsearch
+  verbs:
+  - use
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+subjects:
+- kind: ServiceAccount
+  name: elasticsearch
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: elasticsearch
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+---
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+    stack: logging
+spec:
+  fsGroup:
+    rule: RunAsAny
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  allowedCapabilities:
+  - 'IPC_LOCK'
+  - 'SYS_RESOURCE'
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+  hostPID: true
+  hostIPC: true
+  hostNetwork: true
+  hostPorts:
+  - min: 1
+    max: 65536
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -118,77 +189,6 @@ spec:
   resources:
     requests:
       storage: 1G
----
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  name: elasticsearch
-  labels:
-    app: elasticsearch
-    stack: logging
-rules:
-- apiGroups:
-  - extensions
-  resources:
-  - podsecuritypolicies
-  resourceNames:
-  - elasticsearch
-  verbs:
-  - use
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: elasticsearch
-  labels:
-    app: elasticsearch
-    stack: logging
-subjects:
-- kind: ServiceAccount
-  name: elasticsearch
-  namespace: default
-roleRef:
-  kind: ClusterRole
-  name: elasticsearch
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: elasticsearch
-  labels:
-    app: elasticsearch
-    stack: logging
----
-apiVersion: extensions/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  name: elasticsearch
-  labels:
-    app: elasticsearch
-    stack: logging
-spec:
-  fsGroup:
-    rule: RunAsAny
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  allowedCapabilities:
-  - 'IPC_LOCK'
-  - 'SYS_RESOURCE'
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
-  hostPID: true
-  hostIPC: true
-  hostNetwork: true
-  hostPorts:
-  - min: 1
-    max: 65536
 ---
 apiVersion: v1
 kind: Service
@@ -625,17 +625,47 @@ metadata:
   labels:
     app: kibana
     stack: logging
+  annotations:
+    ingress.kubernetes.io/auth-signin: https://$host/oauth2/start
+    ingress.kubernetes.io/auth-url: https://$host/oauth2/auth
+    kubernetes.io/tls-acme: "true"
 spec:
   rules:
-  -
-    # host: kibana.minikube.localnet
-    host: kibana.j9egj.k8s.ginger.eu-central-1.aws.gigantic.io
+  - host: kibana.codeformuenster.org
     http:
       paths:
       - path: /
         backend:
           serviceName: kibana
           servicePort: 5601
+  tls:
+  - secretName: kibana-tls
+    hosts:
+    - kibana.codeformuenster.org
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kibana-auth
+  labels:
+    app: kibana-auth
+    stack: logging
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  rules:
+  - host: kibana.codeformuenster.org
+    http:
+      paths:
+      - path: /oauth2
+        backend:
+          serviceName: oauth2-proxy
+          servicePort: 4180
+  tls:
+  - secretName: kibana-tls
+    hosts:
+    - kibana.codeformuenster.org
 ---
 apiVersion: v1
 kind: Service
@@ -653,3 +683,70 @@ spec:
   selector:
     app: kibana
     stack: logging
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-proxy
+  labels:
+    app: oauth2-proxy
+data:
+  oauth2_proxy.cfg: |
+    # for reference see https://github.com/bitly/oauth2_proxy/blob/master/contrib/oauth2_proxy.cfg.example
+
+    http_address = "0.0.0.0:4180"
+    upstreams = ["file:///dev/null"]
+
+    provider = "github"
+    email_domains = ["*"]
+    github_org = "codeformuenster"
+    github_team = "kube-admin,hacker"
+    client_id = "16cf63d2612dc04c938f"
+    client_secret = "e1ef428865fa6f05c6256d20a7bccdd027392fc2"
+    cookie_secret = "vJsbnX5uFU0KY5OYa6a6gA=="
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  labels:
+    app: oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: giantswarm/oauth2_proxy:master
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 4180
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/oauth2_proxy
+      volumes:
+      - name: config
+        configMap:
+          name: oauth2-proxy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy
+  labels:
+    app: oauth2-proxy
+spec:
+  ports:
+  - name: http
+    port: 4180
+    protocol: TCP
+    targetPort: 4180
+  selector:
+    app: oauth2-proxy
