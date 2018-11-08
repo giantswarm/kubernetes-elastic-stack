@@ -156,24 +156,24 @@ spec:
       #   hostPath:
       #     path: /srv/elasticsearch-data
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: elasticsearch
-  labels:
-    app: elasticsearch
-    stack: logging
-spec:
-  rules:
-  -
-    # host: elasticsearch.minikube.localnet
-    host: elasticsearch.j9egj.k8s.ginger.eu-central-1.aws.gigantic.io
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: elasticsearch
-          servicePort: 9200
+# apiVersion: extensions/v1beta1
+# kind: Ingress
+# metadata:
+#   name: elasticsearch
+#   labels:
+#     app: elasticsearch
+#     stack: logging
+# spec:
+#   rules:
+#   -
+#     # host: elasticsearch.minikube.localnet
+#     host: <YOUR_HOST>
+#     http:
+#       paths:
+#       - path: /
+#         backend:
+#           serviceName: elasticsearch
+#           servicePort: 9200
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -697,54 +697,54 @@ spec:
         configMap:
           name: kibana
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: kibana
-  labels:
-    app: kibana
-    stack: logging
-  annotations:
-    ingress.kubernetes.io/auth-signin: https://$host/oauth2/start
-    ingress.kubernetes.io/auth-url: https://$host/oauth2/auth
-    kubernetes.io/tls-acme: "true"
-spec:
-  rules:
-  - host: kibana.codeformuenster.org
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: kibana
-          servicePort: 5601
-  tls:
-  - secretName: kibana-tls
-    hosts:
-    - kibana.codeformuenster.org
+# apiVersion: extensions/v1beta1
+# kind: Ingress
+# metadata:
+#   name: kibana
+#   labels:
+#     app: kibana
+#     stack: logging
+#   annotations:
+#     ingress.kubernetes.io/auth-signin: https://$host/oauth2/start
+#     ingress.kubernetes.io/auth-url: https://$host/oauth2/auth
+#     kubernetes.io/tls-acme: "true"
+# spec:
+#   rules:
+#   - host: <YOUR_HOST>
+#     http:
+#       paths:
+#       - path: /
+#         backend:
+#           serviceName: kibana
+#           servicePort: 5601
+#   tls:
+#   - secretName: kibana-tls
+#     hosts:
+#     - <YOUR_HOST>
 
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: kibana-auth
-  labels:
-    app: kibana-auth
-    stack: logging
-  annotations:
-    kubernetes.io/tls-acme: "true"
-spec:
-  rules:
-  - host: kibana.codeformuenster.org
-    http:
-      paths:
-      - path: /oauth2
-        backend:
-          serviceName: oauth2-proxy
-          servicePort: 4180
-  tls:
-  - secretName: kibana-tls
-    hosts:
-    - kibana.codeformuenster.org
+# ---
+# apiVersion: extensions/v1beta1
+# kind: Ingress
+# metadata:
+#   name: kibana-auth
+#   labels:
+#     app: kibana-auth
+#     stack: logging
+#   annotations:
+#     kubernetes.io/tls-acme: "true"
+# spec:
+#   rules:
+#   - host: <YOUR_HOST>
+#     http:
+#       paths:
+#       - path: /oauth2
+#         backend:
+#           serviceName: oauth2-proxy
+#           servicePort: 4180
+#   tls:
+#   - secretName: kibana-tls
+#     hosts:
+#     - <YOUR_HOST>
 ---
 apiVersion: v1
 kind: Service
@@ -778,11 +778,11 @@ data:
 
     provider = "github"
     email_domains = ["*"]
-    github_org = "codeformuenster"
-    github_team = "kube-admin,hacker"
-    client_id = "16cf63d2612dc04c938f"
-    client_secret = "e1ef428865fa6f05c6256d20a7bccdd027392fc2"
-    cookie_secret = "vJsbnX5uFU0KY5OYa6a6gA=="
+    github_org = "<GITHUB_ORG>"
+    github_team = "<GITHUB_TEAM>"
+    client_id = "<OIDC_ID>"
+    client_secret = "<OIDC_SECRET>"
+    cookie_secret = "<OIDC_COOKIE>"
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
