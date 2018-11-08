@@ -311,186 +311,229 @@ metadata:
   labels:
     app: fluentd
 data:
-  # see also https://github.com/kubernetes/kubernetes/blob/master/cluster/addons/fluentd-elasticsearch/fluentd-es-image/td-agent.conf
-  # https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter
-  # https://groups.google.com/forum/#!msg/fluentd/CMZf4cTPlow/GADnOFIsBQAJ
-  # https://github.com/fabric8io/docker-fluentd-kubernetes/issues/11
-  # > Yeah, I use this plugin to regroup multilines (with multiline_start_regexp parameter) from my JSON docker logs on kubernetes (with ES /Fluentd / Kibana associated ), an then I parse them with fluent-plugin-parser , so I can handle correctly traceback and other multilines logs in elasticsearch.
-  #
-  # fluent-plugin-concat, fluent-plugin-parser, rewrite_tag_filter
-  # https://github.com/fluent/fluent-plugin-rewrite-tag-filter
-  #
-  # http://dev.haufe.io/fluentd-log-parsing/ !!
-  #
-  # fluent-plugin-grok-parser
-  #
-  # https://github.com/fluent/fluentd/blob/master/ChangeLog
-
-  fluent.conf: |
-    @include kubernetes.conf
-
+  output.conf: |
+    # Enriches records with Kubernetes metadata
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+    </filter>
+    
     <match **>
-      type elasticsearch
-      log_level info
+      @id elasticsearch
+      @type elasticsearch
+      @log_level info
       include_tag_key true
-      host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
-      port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
-      scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'http'}"
-      # user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
-      # password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
-      reload_connections "#{ENV['FLUENT_ELASTICSEARCH_RELOAD_CONNECTIONS'] || 'true'}"
-      logstash_prefix "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX'] || 'logstash'}"
+      type_name fluentd
+      host "#{ENV['OUTPUT_HOST']}"
+      port "#{ENV['OUTPUT_PORT']}"
       logstash_format true
-      buffer_chunk_limit 2M
-      buffer_queue_limit 32
-      flush_interval 5s
-      max_retry_wait 30
-      disable_retry_limit
-      num_threads 8
+      <buffer>
+        @type file
+        path /var/log/fluentd-buffers/kubernetes.system.buffer
+        flush_mode interval
+        retry_type exponential_backoff
+        flush_thread_count 2
+        flush_interval 5s
+        retry_forever
+        retry_max_interval 30
+        chunk_limit_size "#{ENV['OUTPUT_BUFFER_CHUNK_LIMIT']}"
+        queue_limit_length "#{ENV['OUTPUT_BUFFER_QUEUE_LIMIT']}"
+        overflow_action block
+      </buffer>
     </match>
+  
 
   kubernetes.conf: |
-    # https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter/blob/master/README.md
-
-    <match fluent.**>
-      type null
-    </match>
-
+    # This configuration file for Fluentd / td-agent is used
+    # to watch changes to Docker log files. The kubelet creates symlinks that
+    # capture the pod name, namespace, container name & Docker container ID
+    # to the docker logs for pods in the /var/log/containers directory on the host.
+    # If running this fluentd configuration in a Docker container, the /var/log
+    # directory should be mounted in the container.
+    #
+    # These logs are then submitted to Elasticsearch which assumes the
+    # installation of the fluent-plugin-elasticsearch & the
+    # fluent-plugin-kubernetes_metadata_filter plugins.
+    # See https://github.com/uken/fluent-plugin-elasticsearch &
+    # https://github.com/fabric8io/fluent-plugin-kubernetes_metadata_filter for
+    # more information about the plugins.
+    #
+    # Example
+    # =======
+    # A line in the Docker log file might look like this JSON:
+    #
+    # {"log":"2014/09/25 21:15:03 Got request with path wombat\n",
+    #  "stream":"stderr",
+    #   "time":"2014-09-25T21:15:03.499185026Z"}
+    #
+    # The time_format specification below makes sure we properly
+    # parse the time format produced by Docker. This will be
+    # submitted to Elasticsearch and should appear like:
+    # $ curl 'http://elasticsearch-logging:9200/_search?pretty'
+    # ...
+    # {
+    #      "_index" : "logstash-2014.09.25",
+    #      "_type" : "fluentd",
+    #      "_id" : "VBrbor2QTuGpsQyTCdfzqA",
+    #      "_score" : 1.0,
+    #      "_source":{"log":"2014/09/25 22:45:50 Got request with path wombat\n",
+    #                 "stream":"stderr","tag":"docker.container.all",
+    #                 "@timestamp":"2014-09-25T22:45:50+00:00"}
+    #    },
+    # ...
+    #
+    # The Kubernetes fluentd plugin is used to write the Kubernetes metadata to the log
+    # record & add labels to the log record if properly configured. This enables users
+    # to filter & search logs on any metadata.
+    # For example a Docker container's logs might be in the directory:
+    #
+    #  /var/lib/docker/containers/997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b
+    #
+    # and in the file:
+    #
+    #  997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b-json.log
+    #
+    # where 997599971ee6... is the Docker ID of the running container.
+    # The Kubernetes kubelet makes a symbolic link to this file on the host machine
+    # in the /var/log/containers directory which includes the pod name and the Kubernetes
+    # container name:
+    #
+    #    synthetic-logger-0.25lps-pod_default_synth-lgr-997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b.log
+    #    ->
+    #    /var/lib/docker/containers/997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b/997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b-json.log
+    #
+    # The /var/log directory on the host is mapped to the /var/log directory in the container
+    # running this instance of Fluentd and we end up collecting the file:
+    #
+    #   /var/log/containers/synthetic-logger-0.25lps-pod_default_synth-lgr-997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b.log
+    #
+    # This results in the tag:
+    #
+    #  var.log.containers.synthetic-logger-0.25lps-pod_default_synth-lgr-997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b.log
+    #
+    # The Kubernetes fluentd plugin is used to extract the namespace, pod name & container name
+    # which are added to the log message as a kubernetes field object & the Docker container ID
+    # is also added under the docker field object.
+    # The final tag is:
+    #
+    #   kubernetes.var.log.containers.synthetic-logger-0.25lps-pod_default_synth-lgr-997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b.log
+    #
+    # And the final log record look like:
+    #
+    # {
+    #   "log":"2014/09/25 21:15:03 Got request with path wombat\n",
+    #   "stream":"stderr",
+    #   "time":"2014-09-25T21:15:03.499185026Z",
+    #   "kubernetes": {
+    #     "namespace": "default",
+    #     "pod_name": "synthetic-logger-0.25lps-pod",
+    #     "container_name": "synth-lgr"
+    #   },
+    #   "docker": {
+    #     "container_id": "997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b"
+    #   }
+    # }
+    #
+    # This makes it easier for users to search for logs by pod name or by
+    # the name of the Kubernetes container regardless of how many times the
+    # Kubernetes pod has been restarted (resulting in a several Docker container IDs).
+    # Json Log Example:
+    # {"log":"[info:2016-02-16T16:04:05.930-08:00] Some log text here\n","stream":"stdout","time":"2016-02-17T00:04:05.931087621Z"}
+    # CRI Log Example:
+    # 2016-02-17T00:04:05.931087621Z stdout F [info:2016-02-16T16:04:05.930-08:00] Some log text here
     <source>
-      type tail
+      @id fluentd-containers.log
+      @type tail
       path /var/log/containers/*.log
       pos_file /var/log/fluentd-containers.log.pos
       time_format %Y-%m-%dT%H:%M:%S.%NZ
-      # tag_to_kubernetes_name_regexp \.(?<pod_name>[^\._]+)_(?<namespace>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$</pod>)
-      tag kubernetes.*
+      tag raw.kubernetes.*
       format json
       read_from_head true
     </source>
-
+    # Detect exceptions in the log output and forward them as one log entry.
+    <match raw.kubernetes.**>
+      @id raw.kubernetes
+      @type detect_exceptions
+      remove_tag_prefix raw
+      message log
+      stream stream
+      multiline_flush_interval 5
+      max_bytes 500000
+      max_lines 1000
+    </match>
+    # Multi-line parsing is required for all the kube logs because very large log
+    # statements, such as those that include entire object bodies, get split into
+    # multiple lines by glog.
+    # Example:
+    # I0204 07:32:30.020537    3368 server.go:1048] POST /stats/container/: (13.972191ms) 200 [[Go-http-client/1.1] 10.244.1.3:40537]
     <source>
-      type tail
-      format /^(?<time>[^ ]* [^ ,]*)[^\[]*\[[^\]]*\]\[(?<severity>[^ \]]*) *\] (?<message>.*)$/
-      time_format %Y-%m-%d %H:%M:%S
-      path /var/log/salt/minion
-      pos_file /var/log/fluentd-salt.pos
-      tag salt
-    </source>
-
-    <source>
-      type tail
-      format syslog
-      path /var/log/startupscript.log
-      pos_file /var/log/fluentd-startupscript.log.pos
-      tag startupscript
-    </source>
-
-    <source>
-      type tail
-      format /^time="(?<time>[^)]*)" level=(?<severity>[^ ]*) msg="(?<message>[^"]*)"( err="(?<error>[^"]*)")?( statusCode=($<status_code>\d+))?/
-      path /var/log/docker.log
-      pos_file /var/log/fluentd-docker.log.pos
-      tag docker
-    </source>
-
-    <source>
-      type tail
-      format none
-      path /var/log/etcd.log
-      pos_file /var/log/fluentd-etcd.log.pos
-      tag etcd
-    </source>
-
-    <source>
-      type tail
-      format kubernetes
+      @id kubelet.log
+      @type tail
+      format multiline
       multiline_flush_interval 5s
+      format_firstline /^\w\d{4}/
+      format1 /^(?<severity>\w)(?<time>\d{4} [^\s]*)\s+(?<pid>\d+)\s+(?<source>[^ \]]+)\] (?<message>.*)/
+      time_format %m%d %H:%M:%S.%N
       path /var/log/kubelet.log
-      pos_file /var/log/fluentd-kubelet.log.pos
+      pos_file /var/log/kubelet.log.pos
       tag kubelet
     </source>
-
+    # Example:
+    # I1118 21:26:53.975789       6 proxier.go:1096] Port "nodePort for kube-system/default-http-backend:http" (:31429/tcp) was open before and is still needed
     <source>
-      type tail
-      format kubernetes
+      @id kube-proxy.log
+      @type tail
+      format multiline
       multiline_flush_interval 5s
+      format_firstline /^\w\d{4}/
+      format1 /^(?<severity>\w)(?<time>\d{4} [^\s]*)\s+(?<pid>\d+)\s+(?<source>[^ \]]+)\] (?<message>.*)/
+      time_format %m%d %H:%M:%S.%N
       path /var/log/kube-proxy.log
-      pos_file /var/log/fluentd-kube-proxy.log.pos
+      pos_file /var/log/kube-proxy.log.pos
       tag kube-proxy
     </source>
-
+    # Example:
+    # I0204 07:00:19.604280       5 handlers.go:131] GET /api/v1/nodes: (1.624207ms) 200 [[kube-controller-manager/v1.1.3 (linux/amd64) kubernetes/6a81b50] 127.0.0.1:38266]
     <source>
-      type tail
-      format kubernetes
+      @id kube-apiserver.log
+      @type tail
+      format multiline
       multiline_flush_interval 5s
+      format_firstline /^\w\d{4}/
+      format1 /^(?<severity>\w)(?<time>\d{4} [^\s]*)\s+(?<pid>\d+)\s+(?<source>[^ \]]+)\] (?<message>.*)/
+      time_format %m%d %H:%M:%S.%N
       path /var/log/kube-apiserver.log
-      pos_file /var/log/fluentd-kube-apiserver.log.pos
+      pos_file /var/log/kube-apiserver.log.pos
       tag kube-apiserver
     </source>
-
+    # Example:
+    # I0204 06:55:31.872680       5 servicecontroller.go:277] LB already exists and doesn't need update for service kube-system/kube-ui
     <source>
-      type tail
-      format kubernetes
+      @id kube-controller-manager.log
+      @type tail
+      format multiline
       multiline_flush_interval 5s
+      format_firstline /^\w\d{4}/
+      format1 /^(?<severity>\w)(?<time>\d{4} [^\s]*)\s+(?<pid>\d+)\s+(?<source>[^ \]]+)\] (?<message>.*)/
+      time_format %m%d %H:%M:%S.%N
       path /var/log/kube-controller-manager.log
-      pos_file /var/log/fluentd-kube-controller-manager.log.pos
+      pos_file /var/log/kube-controller-manager.log.pos
       tag kube-controller-manager
     </source>
-
+    # Example:
+    # W0204 06:49:18.239674       7 reflector.go:245] pkg/scheduler/factory/factory.go:193: watch of *api.Service ended with: 401: The event in requested index is outdated and cleared (the requested history has been cleared [2578313/2577886]) [2579312]
     <source>
-      type tail
-      format kubernetes
+      @id kube-scheduler.log
+      @type tail
+      format multiline
       multiline_flush_interval 5s
+      format_firstline /^\w\d{4}/
+      format1 /^(?<severity>\w)(?<time>\d{4} [^\s]*)\s+(?<pid>\d+)\s+(?<source>[^ \]]+)\] (?<message>.*)/
+      time_format %m%d %H:%M:%S.%N
       path /var/log/kube-scheduler.log
-      pos_file /var/log/fluentd-kube-scheduler.log.pos
+      pos_file /var/log/kube-scheduler.log.pos
       tag kube-scheduler
     </source>
-
-    <source>
-      type tail
-      format kubernetes
-      multiline_flush_interval 5s
-      path /var/log/rescheduler.log
-      pos_file /var/log/fluentd-rescheduler.log.pos
-      tag rescheduler
-    </source>
-
-    <source>
-      type tail
-      format kubernetes
-      multiline_flush_interval 5s
-      path /var/log/glbc.log
-      pos_file /var/log/fluentd-glbc.log.pos
-      tag glbc
-    </source>
-
-    <source>
-      type tail
-      format kubernetes
-      multiline_flush_interval 5s
-      path /var/log/cluster-autoscaler.log
-      pos_file /var/log/fluentd-cluster-autoscaler.log.pos
-      tag cluster-autoscaler
-    </source>
-
-    <filter kubernetes.**>
-      type kubernetes_metadata
-    </filter>
-
-    <filter kubernetes.var.log.containers.nginx-ingress-controller-**>
-      # https://github.com/kubernetes/ingress/tree/master/controllers/nginx#log-format
-      type parser
-      reserve_data true
-      hash_value_field parsed
-      key_name log
-      format /^(?<remote_addr>[^ ]*) - \[(?<proxy_add_x_forwarded_for>[^\]]*)\] - (?<remote_user>[^ ]*) \[(?<time_local>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*) +\S*)?" (?<status>[^ ]*) (?<body_bytes_sent>[^ ]*)(?: "(?<http_referer>[^\"]*)" "(?<http_user_agent>[^\"]*)")?.*$/
-    </filter>
-
-    # <filter kubernetes.var.log.containers.nginx-ingress-controller-**>
-    #   type record_transformer
-    #   <record>
-    #     message "#{parsed.method} #{parsed.path} #{parsed.status}"
-    #   </record>
-    # </filter>
 
   # prometheus.conf: |
   #   # https://github.com/kazegusuri/fluent-plugin-prometheus#usage
@@ -528,42 +571,78 @@ spec:
       serviceAccountName: fluentd
       containers:
       - name: fluentd
-        image: fluent/fluentd-kubernetes-daemonset:v0.12.33-elasticsearch
+        image: gcr.io/google-containers/fluentd-elasticsearch:v2.3.1
         imagePullPolicy: IfNotPresent
         env:
-        - name:  FLUENT_ELASTICSEARCH_HOST
-          value: "elasticsearch.default.svc"
-        - name:  FLUENT_ELASTICSEARCH_PORT
-          value: "9200"
-        - name:  FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
-          value: "fluentd"
-        - name: DEBUG
-          value: "true"
+        - name: OUTPUT_HOST
+          value: 'elasticsearch.default.svc'
+        - name: OUTPUT_PORT
+          value: '9200'
+        - name: OUTPUT_BUFFER_CHUNK_LIMIT
+          value: '2M'
+        - name: OUTPUT_BUFFER_QUEUE_LIMIT
+          value: '8'
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         volumeMounts:
-        - name: config
-          mountPath: /fluentd/etc
-        - name: host-var-log
+        - name: varlog
           mountPath: /var/log
-        - name: host-var-lib-docker-containers
+        - name: varlibdockercontainers
           mountPath: /var/lib/docker/containers
-          # readOnly: true
-        - name: minikube-var-lib-docker-containers
-          mountPath: /mnt/sda1/var/lib/docker/containers
-        # securityContext:
-        #   runAsUser: 0
+          readOnly: true
+        - name: libsystemddir
+          mountPath: /host/lib
+          readOnly: true
+        - name: config-volume-fluentd
+          mountPath: /etc/fluent/config.d
+        # Liveness probe is aimed to help in situarions where fluentd
+        # silently hangs for no apparent reasons until manual restart.
+        # The idea of this probe is that if fluentd is not queueing or
+        # flushing chunks for 5 minutes, something is not right. If
+        # you want to change the fluentd configuration, reducing amount of
+        # logs fluentd collects, consider changing the threshold or turning
+        # liveness probe off completely.
+        livenessProbe:
+          initialDelaySeconds: 600
+          periodSeconds: 60
+          exec:
+            command:
+            - '/bin/sh'
+            - '-c'
+            - >
+              LIVENESS_THRESHOLD_SECONDS=${LIVENESS_THRESHOLD_SECONDS:-300};
+              STUCK_THRESHOLD_SECONDS=${LIVENESS_THRESHOLD_SECONDS:-900};
+              if [ ! -e /var/log/fluentd-buffers ];
+              then
+                exit 1;
+              fi;
+              touch -d "${STUCK_THRESHOLD_SECONDS} seconds ago" /tmp/marker-stuck;
+              if [[ -z "$(find /var/log/fluentd-buffers -type f -newer /tmp/marker-stuck -print -quit)" ]];
+              then
+                rm -rf /var/log/fluentd-buffers;
+                exit 1;
+              fi;
+              touch -d "${LIVENESS_THRESHOLD_SECONDS} seconds ago" /tmp/marker-liveness;
+              if [[ -z "$(find /var/log/fluentd-buffers -type f -newer /tmp/marker-liveness -print -quit)" ]];
+              then
+                exit 1;
+              fi;
       volumes:
-      - name: config
-        configMap:
-          name: fluentd
-      - name: host-var-log
+      - name: varlog
         hostPath:
           path: /var/log
-      - name: host-var-lib-docker-containers
+      - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
-      - name: minikube-var-lib-docker-containers
+      # It is needed to copy systemd library to decompress journals
+      - name: libsystemddir
         hostPath:
-          path: /mnt/sda1/var/lib/docker/containers
+          path: /usr/lib64
+      - name: config-volume-fluentd
+        configMap:
+          name: fluentd
 ---
 apiVersion: v1
 kind: ConfigMap
