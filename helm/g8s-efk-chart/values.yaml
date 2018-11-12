@@ -1,0 +1,67 @@
+# Default values for elasticsearch.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+appVersion: "6.1.1"
+
+namespace: "logging"
+clusterName: "cluster-efk"
+logsPrefix: "logs"
+
+## Specify if a Pod Security Policy for node-exporter must be created
+## Ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+##
+podSecurityPolicy:
+  enabled: false
+
+elasticsearch:
+  image:
+    repository: "docker.elastic.co/elasticsearch/elasticsearch-oss"
+    tag: "6.1.1"
+    pullPolicy: "IfNotPresent"
+
+  persistence:
+    enabled: true
+    pvcName: "elasticsearch-data"
+    size: "10Gi"
+
+  resources:
+    limits:
+      cpu: "750m"
+      memory: "6Gi"
+    requests:
+      cpu: "750m"
+      memory: "4Gi"
+
+  nodeAffinity: {}
+  nodeSelector: {}
+  tolerations: []
+
+curator:
+  retention: "14" #Days
+  # Once every night. We randomly chose 03:33 to avoid 00:00.
+  cron: "25 11 * * *"
+
+fluentbit:
+  image:
+    repository: "quay.io/giantswarm/fluent-bit"
+    tag: "0.14.6"
+    pullPolicy: "IfNotPresent"
+
+kibana:
+  image:
+    repository: "quay.io/giantswarm/kibana-oss"
+    tag: "6.1.4"
+    pullPolicy: "IfNotPresent"
+
+  tls:
+    crt: 
+    key: 
+  
+  ingress:
+    enabled: false
+    host: ""
+    whitelist:
+      enabled: false
+      ranges: ""
+    letsencrypt:
+      enabled: false

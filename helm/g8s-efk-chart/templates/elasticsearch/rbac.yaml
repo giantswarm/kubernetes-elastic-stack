@@ -1,0 +1,53 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: elasticsearch
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - "services"
+  - "namespaces"
+  - "endpoints"
+  verbs:
+  - "get"
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: elasticsearch
+subjects:
+  - kind: ServiceAccount
+    name: elasticsearch 
+    namespace: "{{ .Values.namespace }}"
+roleRef:
+  kind: ClusterRole
+  name: elasticsearch 
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: elasticsearch-psp
+rules:
+  - apiGroups:
+      - extensions
+    resources:
+      - podsecuritypolicies
+    verbs:
+      - use
+    resourceNames:
+      - elasticsearch-psp
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: elasticsearch-psp
+subjects:
+  - kind: ServiceAccount
+    name: elasticsearch
+    namespace: "{{ .Values.namespace }}"
+roleRef:
+  kind: ClusterRole
+  name: elasticsearch-psp
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,104 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        releasetime: {{ $.Release.Time }}
+      labels:
+        app: kibana
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: NotIn
+                values:
+                - master
+      containers:
+      {{- if .Values.kibana.ingress.enabled }}
+      - name: nginx
+        image: quay.io/giantswarm/nginx:1.12.2
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/
+        - name: nginx-htpasswd
+          mountPath: /htpasswd/
+        resources:
+          requests:
+            cpu: 50m
+            memory: 75Mi
+          limits:
+            cpu: 50m
+            memory: 75Mi
+      {{- end }}
+      - name: kibana
+        image: "{{ .Values.kibana.image.repository}}:{{ .Values.kibana.image.tag}}"
+        imagePullPolicy: {{ .Values.elasticsearch.image.pullPolicy | quote }}
+        ports:
+        - containerPort: 5601
+        livenessProbe:
+          httpGet:
+            path: /api/status
+            port: 5601
+          initialDelaySeconds: 120
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/status
+            port: 5601
+          initialDelaySeconds: 5
+          timeoutSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/kibana/kibana.yml
+          subPath: kibana.yml
+      - name: sidecar
+        # see https://github.com/giantswarm/kibana-sidecar/pull/3 for info on the image version.
+        # TODO: change to :latest when kibana-sidecar#3 is merged
+        image: quay.io/giantswarm/kibana-sidecar:c9394dc31b769c74841e98201973dbb954506cf1
+        imagePullPolicy: Always
+        env:
+          - name: ELASTICSEARCH_ENDPOINT
+            value: http://elasticsearch.{{ .Values.namespace }}.svc:9200
+          # semantic version number of Kibana
+          - name: KIBANA_VERSION
+            value: "{{ .Values.elasticsearch.image.tag }}"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 50m
+            memory: 50Mi
+      restartPolicy: Always
+      volumes:
+      {{- if .Values.kibana.ingress.enabled }}
+      - name: nginx-config
+        configMap:
+          name: kibana-nginx-configmap
+      - name: nginx-htpasswd
+        secret:
+          secretName: kibana-nginx-secret
+      {{- end }}
+      - name: config
+        configMap:
+          name: kibana

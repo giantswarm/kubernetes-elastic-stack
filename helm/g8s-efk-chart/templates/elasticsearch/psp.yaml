@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: elasticsearch-psp
+spec:
+  privileged: true
+  fsGroup:
+    rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+    - 'secret'
+    - 'configMap'
+    - 'hostPath'
+    - 'persistentVolumeClaim'
+    - 'emptyDir'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false

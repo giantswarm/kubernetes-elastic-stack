@@ -1,0 +1,78 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: fluentbit
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    app: fluentbit
+spec:
+  template:
+    metadata:
+      annotations:
+        releasetime: {{ $.Release.Time }}
+      labels:
+        app: fluentbit
+    spec:
+      tolerations:
+      # Tolerate master taint
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: fluentbit
+        image: "{{ .Values.fluentbit.image.repository }}:{{ .Values.fluentbit.image.tag }}"
+        imagePullPolicy: {{ .Values.elasticsearch.image.pullPolicy | quote }}
+        command: ["/fluent-bit/bin/fluent-bit"]
+        args: ["--config=/fluentbit/etc/fluentbit.conf"]
+        env:
+        - name: FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.{{ .Values.namespace }}.svc"
+        - name: FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        - name: FLUENT_ELASTICSEARCH_PREFIX
+          value: "{{ .Values.logsPrefix }}"
+        resources:
+          limits:
+            cpu: 40m
+            memory: 80Mi
+          requests:
+            cpu: 40m
+            memory: 80Mi
+        livenessProbe:
+          tcpSocket:
+            port: 2020
+          initialDelaySeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 2020
+          initialDelaySeconds: 10
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: fluentbit-config-vol
+          mountPath: /fluentbit/etc/
+        - name: mnt
+          mountPath: /mnt
+          readOnly: true
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: fluentbit-config-vol
+        configMap:
+          name: fluentbit-config
+      - name: mnt
+        hostPath:
+          path: /mnt
+      serviceAccountName: fluentbit
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate

@@ -1,0 +1,17 @@
+{{- if .Values.elasticsearch.persistence.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  labels:
+    app: elasticsearch
+  name: {{ .Values.elasticsearch.persistence.pvcName }}
+  namespace: "{{ .Values.namespace }}"
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.elasticsearch.persistence.size }}
+{{- end }}
