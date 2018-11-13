@@ -5,7 +5,7 @@ appVersion: "6.1.1"
 
 namespace: "logging"
 clusterName: "cluster-efk"
-logsPrefix: "logs"
+logsPrefix: "gslogs"
 
 ## Specify if a Pod Security Policy for node-exporter must be created
 ## Ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
@@ -43,13 +43,13 @@ curator:
 
 fluentbit:
   image:
-    repository: "quay.io/giantswarm/fluent-bit"
+    repository: "fluent/fluent-bit"
     tag: "0.14.6"
     pullPolicy: "IfNotPresent"
 
 kibana:
   image:
-    repository: "quay.io/giantswarm/kibana-oss"
+    repository: "docker.elastic.co/kibana/kibana-oss"
     tag: "6.1.4"
     pullPolicy: "IfNotPresent"
 
