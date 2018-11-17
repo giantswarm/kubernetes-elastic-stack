@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    app: kibana
+data:
+  kibana.yml: |
+    server:
+      name: {{ .Values.clusterName }}
+      port: 127.0.0.1:5601
+    elasticsearch:
+      url: "http://elasticsearch.{{ .Values.namespace }}.svc:9200"

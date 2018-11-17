@@ -1,0 +1,34 @@
+{{- if .Values.kibana.ingress.enabled }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kibana
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    app: kibana
+  annotations:
+    {{- if .Values.kibana.letsencrypt.enabled }}
+    kubernetes.io/tls-acme: "true"
+    {{- end }}
+    {{- if .Values.kibana.whitelist.enabled }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.kibana.whitelist.ranges }}"
+    {{- end }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.kibana.host }}
+    {{- if .Values.kibana.letsencrypt.enabled }}
+    secretName: monitoring-kibana
+    {{- else }}
+    secretName: kibana-certs-secret
+    {{- end }}
+  rules:
+  -
+    host: {{ .Values.kibana.host }} 
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kibana
+          servicePort: 8000
+{{- end }}

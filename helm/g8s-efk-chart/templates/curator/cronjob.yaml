@@ -1,0 +1,40 @@
+apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  namespace: "{{ .Values.namespace }}"
+  name: curator
+spec:
+  schedule: "{{ .Values.curator.cron }}"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: curator
+          labels:
+            app: curator
+        spec:
+          containers:
+          - name: curator
+            image: quay.io/giantswarm/curator:latest
+            imagePullPolicy: Always
+            env:
+              - name: ELASTICSEARCH_HOST
+                value: elasticsearch:9200
+              - name: RETENTION_DAYS
+                value: "{{ .Values.curator.retention }}"
+              - name: INDEX_NAME_PREFIX
+                value: "{{ .Values.logsPrefix }}-"
+              - name: INDEX_NAME_TIMEFORMAT
+                value: "%Y.%m.%d"
+            resources:
+              limits:
+                cpu: 50m
+                memory: 50Mi
+              requests:
+                cpu: 50m
+                memory: 50Mi
+          restartPolicy: OnFailure
+          # retry for a maximum of 10 minutes
+          activeDeadlineSeconds: 600
