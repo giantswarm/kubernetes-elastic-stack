@@ -1,0 +1,15 @@
+elasticsearch:
+  enabled: true
+  # for options see ..
+
+kibana:
+  enabled: true
+  # for options see ..
+
+keycloak-gatekeeper:
+  enabled: true
+  # for options see ..
+
+fluentd-elasticsearch:
+  enabled: true
+  # for options see ..

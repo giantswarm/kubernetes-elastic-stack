@@ -1,0 +1,15 @@
+dependencies:
+- name: elasticsearch
+  repository: file://../../../helm-elasticsearch/helm/elasticsearch
+  version: 0.1.6
+- name: fluentd-elasticsearch
+  repository: file://../../../helm-fluentd-elasticsearch/helm/fluentd-elasticsearch
+  version: 0.1.3
+- name: kibana
+  repository: file://../../../helm-kibana/helm/kibana
+  version: 0.1.3
+- name: keycloak-gatekeeper
+  repository: file://../../../playground/helm-keycloak-gatekeeper/helm/keycloak-gatekeeper
+  version: 1.1.1-1
+digest: sha256:a59b10ac7ac69f281e8137c9374319dae6fcbb439a5622b46b98cbf50ca7bd30
+generated: 2019-04-28T17:07:33.599364745+02:00
