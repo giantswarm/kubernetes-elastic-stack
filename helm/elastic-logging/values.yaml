@@ -1,15 +1,15 @@
 elasticsearch:
   enabled: true
-  # for options see ..
+  # for options see https://github.com/giantswarm/helm-elasticsearch
 
 kibana:
   enabled: true
-  # for options see ..
+  # for options see https://github.com/giantswarm/helm-kibana
 
 keycloak-gatekeeper:
   enabled: true
-  # for options see ..
+  # for options see https://github.com/giantswarm/helm-keycloak-gatekeeper
 
 fluentd-elasticsearch:
   enabled: true
-  # for options see ..
+  # for options see https://github.com/kiwigrid/helm-charts/tree/master/charts/fluentd-elasticsearch
