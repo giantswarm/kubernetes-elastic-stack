@@ -18,7 +18,7 @@ dependencies:
   condition: kibana.enabled
 
 - name: keycloak-gatekeeper
-  version: "1.1.1-1"
+  version: "1.1.1-2"
   repository: https://giantswarm.github.com/sample-catalog
   # repository: file://../../../playground/helm-keycloak-gatekeeper/helm/keycloak-gatekeeper
   condition: keycloak-gatekeeper.enabled
