@@ -13,3 +13,7 @@ keycloak-gatekeeper:
 fluentd-elasticsearch:
   enabled: true
   # for options see https://github.com/kiwigrid/helm-charts/tree/master/charts/fluentd-elasticsearch
+
+elasticsearch-exporter:
+  enabled: true
+  # for options see https://github.com/helm/charts/tree/master/stable/elasticsearch-exporter
