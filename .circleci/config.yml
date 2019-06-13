@@ -1,0 +1,16 @@
+version: 2.1
+orbs:
+  architect: giantswarm/architect@0.1.1
+
+workflows:
+  package-and-push-chart-on-tag:
+    jobs:
+      - architect/push-to-app-catalog:
+          name: "package and push elastic-logging chart"
+          app_catalog: "giantswarm-incubator-catalog"
+          app_catalog_test: "giantswarm-incubator-test-catalog"
+          chart: "kubernetes-elastic-stack-elastic-logging"
+          # Trigger job on git tag.
+          filters:
+            tags:
+              only: /^v.*/
