@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/giantswarm/kubernetes-elastic-stack.svg?style=shield)](https://circleci.com/gh/giantswarm/kubernetes-elastic-stack)
+
 # Logging with Elastic in Kubernetes
 
 See [docs](docs/index.md) for full recipe content.
