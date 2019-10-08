@@ -5,7 +5,7 @@ dependencies:
   condition: elasticsearch.enabled
   
 - name: fluentd-elasticsearch
-  version: "0.1.4"
+  version: "0.1.5"
   repository: https://giantswarm.github.com/sample-catalog
   condition: fluentd-elasticsearch.enabled
 
