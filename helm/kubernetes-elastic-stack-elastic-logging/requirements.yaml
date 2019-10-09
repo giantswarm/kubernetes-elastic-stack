@@ -1,16 +1,16 @@
 dependencies:
 - name: elasticsearch
-  version: "0.1.8"
+  version: "0.2.0"
   repository: https://giantswarm.github.com/sample-catalog
   condition: elasticsearch.enabled
   
 - name: fluentd-elasticsearch
-  version: "0.1.5"
+  version: "0.2.0"
   repository: https://giantswarm.github.com/sample-catalog
   condition: fluentd-elasticsearch.enabled
 
 - name: kibana
-  version: "0.1.4"
+  version: "0.2.0"
   repository: https://giantswarm.github.com/sample-catalog
   condition: kibana.enabled
 

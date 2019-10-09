@@ -1,18 +1,18 @@
 dependencies:
 - name: elasticsearch
   repository: https://giantswarm.github.com/sample-catalog
-  version: 0.1.8
+  version: 0.2.0
 - name: fluentd-elasticsearch
   repository: https://giantswarm.github.com/sample-catalog
-  version: 0.1.5
+  version: 0.2.0
 - name: kibana
   repository: https://giantswarm.github.com/sample-catalog
-  version: 0.1.4
+  version: 0.2.0
 - name: keycloak-gatekeeper
   repository: https://giantswarm.github.com/sample-catalog
   version: 1.1.1-3
 - name: elasticsearch-exporter
   repository: https://giantswarm.github.com/sample-catalog
   version: 0.1.0
-digest: sha256:d5308e839b71284f67c4d162477a6b36e4b81fcd7aa3b4bb1b676bf75131452a
-generated: "2019-10-08T13:37:40.450160934+02:00"
+digest: sha256:12354ed26d080276c2727e6680f1d85654d9e4cb4864fc3605da567a83109cda
+generated: "2019-10-09T10:35:01.939431285+02:00"
