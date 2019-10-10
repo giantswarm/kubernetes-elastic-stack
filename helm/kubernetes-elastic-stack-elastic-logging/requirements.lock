@@ -4,7 +4,7 @@ dependencies:
   version: 0.2.1
 - name: fluentd-elasticsearch
   repository: https://giantswarm.github.com/sample-catalog
-  version: 0.2.1
+  version: 0.2.2
 - name: kibana
   repository: https://giantswarm.github.com/sample-catalog
   version: 0.2.0
@@ -13,6 +13,6 @@ dependencies:
   version: 0.1.0
 - name: elasticsearch-curator
   repository: https://giantswarm.github.com/sample-catalog
-  version: 2.0.2
-digest: sha256:fe7032d0d145941d7e434696bacdbeb8c1b5ebc1635ad8fe3a23126295da6760
-generated: "2019-10-10T09:21:20.568641981+02:00"
+  version: 2.0.3
+digest: sha256:781eb64e46319b3d7295ac2484cc77c63294439aeaf40af8e92bceed6db3def7
+generated: "2019-10-10T17:04:52.598372363+02:00"

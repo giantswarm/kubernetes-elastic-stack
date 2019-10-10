@@ -5,7 +5,7 @@ dependencies:
   condition: elasticsearch.enabled
   
 - name: fluentd-elasticsearch
-  version: "0.2.1"
+  version: "0.2.2"
   repository: https://giantswarm.github.com/sample-catalog
   condition: fluentd-elasticsearch.enabled
 
@@ -25,6 +25,6 @@ dependencies:
   condition: elasticsearch-exporter.enabled
 
 - name: elasticsearch-curator
-  version: "2.0.2"
+  version: "2.0.3"
   repository: https://giantswarm.github.com/sample-catalog
   condition: elasticsearch-curator.enabled
