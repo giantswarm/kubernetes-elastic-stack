@@ -2,4 +2,4 @@ apiVersion: v1
 appVersion: 7.4.0
 description: Logging stack with Elasticsearch, fluentd and Kibana
 name: kubernetes-elastic-stack-elastic-logging
-version:  [[ .Version ]]
+version: [[ .Version ]]
