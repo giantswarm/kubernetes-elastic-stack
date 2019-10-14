@@ -7,7 +7,7 @@ kibana:
   # for options see https://github.com/giantswarm/helm-kibana
 
 keycloak-gatekeeper:
-  enabled: true
+  enabled: false
   # for options see https://github.com/giantswarm/helm-keycloak-gatekeeper
 
 fluentd-elasticsearch:
@@ -15,5 +15,9 @@ fluentd-elasticsearch:
   # for options see https://github.com/kiwigrid/helm-charts/tree/master/charts/fluentd-elasticsearch
 
 elasticsearch-exporter:
+  enabled: true
+  # for options see https://github.com/helm/charts/tree/master/stable/elasticsearch-exporter
+
+elasticsearch-curator:
   enabled: true
   # for options see https://github.com/helm/charts/tree/master/stable/elasticsearch-exporter
